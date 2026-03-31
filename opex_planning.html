@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPEX Planningsmodel 2026 – Kuros Biosciences</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root { --primary: #003d7a; --light: #e8f4fd; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; }
+  .input-cell {
+    width: 82px; text-align: right; border: none; background: transparent;
+    padding: 2px 4px; font-size: 0.78rem; color: inherit; font-family: inherit;
+  }
+  .input-cell:focus { outline: 2px solid #2563eb; background: #eff6ff; border-radius: 3px; }
+  .input-cell::-webkit-inner-spin-button,
+  .input-cell::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .input-cell[type=number] { -moz-appearance: textfield; }
+  .cat-header td { background: #003d7a; color: white; font-weight: 600; font-size: 0.8rem; }
+  .cat-total td { background: #bfdbfe; font-weight: 600; font-size: 0.78rem; color: #1e3a5f; }
+  .grand-total td { background: #1e3a5f; color: white; font-weight: 700; font-size: 0.82rem; }
+  .data-row:hover td { background: #f0f9ff !important; }
+  .negative { color: #dc2626 !important; }
+  .section-divider td { background: #f8fafc; height: 6px; padding: 0; }
+  td, th { white-space: nowrap; }
+  .desc-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  .scrollable { overflow-x: auto; }
+  .sidebar-btn { transition: all 0.15s; }
+  .sidebar-btn.active { background: #003d7a; color: white; }
+  .sidebar-btn:not(.active):hover { background: #dbeafe; }
+  .tab-btn { border-bottom: 3px solid transparent; transition: all 0.15s; }
+  .tab-btn.active { border-bottom-color: #003d7a; color: #003d7a; font-weight: 600; }
+  @media print { .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm no-print">
+  <div class="flex items-center gap-4">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:#003d7a">K</div>
+    <div>
+      <div class="font-bold text-gray-800" style="font-size:0.95rem">Kuros Biosciences</div>
+      <div class="text-gray-400 text-xs">OPEX Planningsmodel 2026</div>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button onclick="exportCSV()" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
+      ⬇ Export CSV
+    </button>
+    <button onclick="window.print()" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1">
+      🖨 Afdrukken
+    </button>
+  </div>
+</header>
+
+<div class="flex h-screen" style="padding-top:0">
+  <!-- SIDEBAR -->
+  <aside class="w-56 bg-white border-r border-gray-200 flex flex-col no-print" style="min-height: calc(100vh - 57px)">
+    <div class="p-3 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b">Cost Centers</div>
+    <div id="sidebarList" class="flex flex-col gap-1 p-2 overflow-y-auto flex-1"></div>
+    <div class="p-3 border-t">
+      <button onclick="showSummary()" id="summaryBtn" class="sidebar-btn w-full text-left px-3 py-2 rounded text-sm text-gray-600">
+        📊 Samenvatting
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 overflow-auto" style="min-height: calc(100vh - 57px)">
+    <!-- Cost Center Info Bar -->
+    <div id="infoBar" class="bg-white border-b border-gray-100 px-6 py-3 flex flex-wrap gap-6 items-center shadow-sm">
+    </div>
+
+    <!-- Tab Navigation -->
+    <div id="tabNav" class="bg-white border-b border-gray-200 px-6 flex gap-4 no-print">
+      <button class="tab-btn active py-2.5 text-sm text-gray-600" onclick="switchTab('opex', this)">1. OPEX Planning</button>
+      <button class="tab-btn py-2.5 text-sm text-gray-600" onclick="switchTab('chart', this)">📈 Grafiek</button>
+      <button class="tab-btn py-2.5 text-sm text-gray-600" onclick="switchTab('summary', this)" id="summaryTabBtn">📊 Samenvatting</button>
+    </div>
+
+    <!-- OPEX TAB -->
+    <div id="tab-opex" class="p-4">
+      <div class="scrollable bg-white rounded-lg shadow-sm border border-gray-200">
+        <table class="w-full border-collapse text-xs" id="planningTable">
+          <thead>
+            <tr class="border-b-2" style="border-color:#003d7a">
+              <th class="px-3 py-2 text-left text-gray-500 font-medium w-8">#</th>
+              <th class="px-3 py-2 text-left text-gray-500 font-medium" style="width:120px">Account</th>
+              <th class="px-3 py-2 text-left text-gray-500 font-medium" style="width:200px">Omschrijving</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Jan</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Feb</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Mrt</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Apr</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Mei</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Jun</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Jul</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Aug</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Sep</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Okt</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Nov</th>
+              <th class="px-2 py-2 text-right text-gray-500 font-medium" style="width:82px">Dec</th>
+              <th class="px-2 py-2 text-right font-bold" style="width:90px;color:#003d7a">FY 2026</th>
+              <th class="px-2 py-2 text-left text-gray-400 font-medium" style="width:140px">Toelichting</th>
+              <th class="px-2 py-2 text-center no-print" style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <!-- Add category button -->
+      <div class="mt-3 no-print">
+        <button onclick="addCategory()" class="px-3 py-1.5 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50">
+          + Categorie toevoegen
+        </button>
+      </div>
+    </div>
+
+    <!-- CHART TAB -->
+    <div id="tab-chart" class="p-4 hidden">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Maandelijks OPEX (excl. productie)</h3>
+          <canvas id="barChart" height="250"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Verdeling per categorie (FY 2026)</h3>
+          <canvas id="pieChart" height="250"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 col-span-2">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Cumulatief OPEX 2026</h3>
+          <canvas id="lineChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY TAB -->
+    <div id="tab-summary" class="p-4 hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <h2 class="font-bold text-gray-800 mb-4" style="color:#003d7a">Samenvatting alle cost centers – FY 2026</h2>
+        <div id="summaryContent"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+const MONTHS = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+
+const STATE = {
+  activeCCId: 'CH01-4710',
+  activeTab: 'opex',
+  costCenters: [
+    {
+      id: 'CH01-4710',
+      code: '4710',
+      name: '4710 IT',
+      company: 'CH01',
+      leader: 'Rafael Hutter',
+      currency: 'CHF',
+      categories: [
+        {
+          id: 'c1', name: 'Other Personnel Expense',
+          rows: [
+            { id:'r1', account:'806030', desc:'Training', values:[500,500,500,500,500,500,500,500,500,500,500,500], comment:'IT cursussen' }
+          ]
+        },
+        {
+          id: 'c2', name: 'Travel / Staff Event',
+          rows: [
+            { id:'r2', account:'808010', desc:'Travel expenses - Employees', values:[5500,5500,5500,5500,5500,5500,5500,5500,5500,5500,5500,5500], comment:'6 trips US, 15 NL; Architect 2x US, 6x NL; BI 1x US, 4x NL' },
+            { id:'r3', account:'862030', desc:'Staff Cafeteria & Events', values:[0,0,0,0,0,0,0,450,0,0,0,0], comment:'Teamdag augustus' }
+          ]
+        },
+        {
+          id: 'c3', name: 'Courses & Conferences',
+          rows: [
+            { id:'r4', account:'806040', desc:'Conferences & Vakbeurzen', values:[6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000], comment:'IT vakbeurzen en certificeringen' }
+          ]
+        },
+        {
+          id: 'c4', name: 'IT & Software licenties',
+          rows: [
+            { id:'r5', account:'', desc:'', values:[0,0,0,0,0,0,0,0,0,0,0,0], comment:'' }
+          ]
+        },
+        {
+          id: 'c5', name: 'Consultancy & Externe diensten',
+          rows: [
+            { id:'r6', account:'', desc:'', values:[0,0,0,0,0,0,0,0,0,0,0,0], comment:'' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'NL01-1100',
+      code: '1100',
+      name: '1100 R&D General',
+      company: 'NL01',
+      leader: 'Florence de Groot',
+      currency: 'EUR',
+      categories: [
+        {
+          id: 'c10', name: 'Other Personnel Expense',
+          rows: [
+            { id:'r10', account:'806030', desc:'Training', values:[0,0,0,0,3000,3000,3000,3000,3000,3000,3000,0], comment:'Equipment, SME cursus (vanaf mei)' }
+          ]
+        },
+        {
+          id: 'c11', name: 'Travel / Staff Event',
+          rows: [
+            { id:'r11', account:'808010', desc:'Travel expenses - Employees', values:[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000], comment:'Maandelijks reiskosten R&D team' },
+            { id:'r12', account:'862030', desc:'Staff Cafeteria & Events', values:[500,500,500,500,500,500,500,500,500,500,500,500], comment:'1.000 pp (21 personen)' }
+          ]
+        },
+        {
+          id: 'c12', name: 'Travels & Hotels',
+          rows: [
+            { id:'r13', account:'808020', desc:'Zakelijke reizen & hotels', values:[10500,10500,10500,10500,13500,13500,13500,13500,13500,13500,13500,10500], comment:'Verhoogd budget mei-nov (congressen)' }
+          ]
+        },
+        {
+          id: 'c13', name: 'Lab Supplies & Materialen',
+          rows: [
+            { id:'r14', account:'', desc:'', values:[0,0,0,0,0,0,0,0,0,0,0,0], comment:'' }
+          ]
+        },
+        {
+          id: 'c14', name: 'Courses & Conferences',
+          rows: [
+            { id:'r15', account:'', desc:'', values:[0,0,0,0,0,0,0,0,0,0,0,0], comment:'' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'NL01-3100',
+      code: '3100',
+      name: '3100 Manufacturing',
+      company: 'NL01',
+      leader: 'Sjoerd Musters',
+      currency: 'EUR',
+      categories: [
+        {
+          id: 'c20', name: 'Other Personnel Expense',
+          rows: [
+            { id:'r20', account:'806010', desc:'Contractors & Temps', values:[42000,42000,42000,42000,42000,42000,42000,42000,42000,42000,42000,42000], comment:'Support packaging rooms, lab cleaning, transport' },
+            { id:'r21', account:'806020', desc:'Recruitment', values:[0,10000,30000,10000,10000,0,0,0,10000,0,10000,0], comment:'Morgan labs, external recruitment sr. positions' },
+            { id:'r22', account:'806030', desc:'Training – Critical Roles', values:[2500,2500,2500,2500,2500,2500,2500,2500,2500,2500,2500,2500], comment:'Morgan labs, external recruitment agency' },
+            { id:'r23', account:'806030', desc:'Training – Actief 65+', values:[0,0,5000,0,0,5000,0,0,5000,0,0,5000], comment:'Support packaging rooms kwartaal' },
+            { id:'r24', account:'806030', desc:'Training – GMP', values:[0,0,10000,0,0,0,0,0,0,0,0,0], comment:'GMP training operators, new hires' }
+          ]
+        },
+        {
+          id: 'c21', name: 'Travel / Staff Event',
+          rows: [
+            { id:'r25', account:'808010', desc:'Lean / 5S Training reizen', values:[0,2500,5000,2500,2500,2500,0,0,5000,2500,0,2500], comment:'OpEx coordinator training en on-site training operators' },
+            { id:'r26', account:'862030', desc:'Staff Cafeteria & Events', values:[0,500,2000,0,500,2000,0,500,2000,0,500,2000], comment:'Lean processes e.g. Packaging, Country labelling' }
+          ]
+        },
+        {
+          id: 'c22', name: 'Production Material (inkoop)',
+          rows: [
+            { id:'r27', account:'Positionskonto-Polymer', desc:'Polymer NL', values:[-685710,-457140,-685710,-457140,-685710,-457140,-457140,-228570,-228570,-228570,-228570,-228570], comment:'FWC aanpassing 6-4 maanden' },
+            { id:'r28', account:'Positionskonto-Syringes', desc:'Syringes NL', values:[-122905,-120420,-89348,-270909,0,-174974,0,0,0,0,0,0], comment:'NL dekt volledige vraag 2026, US ramp-up later' },
+            { id:'r29', account:'Positionskonto-Medskin', desc:'Medskin / Fibrin', values:[0,-2860410,0,0,-3340407,0,0,-1404018,-1743105,0,0,0], comment:'Polymer US' },
+            { id:'r30', account:'Positionskonto-MIS', desc:'MIS Components', values:[15354,34828,160815,22264,21111,-15760,57059,44928,51465,263446,-7920,-51280], comment:'MIS mini components incl. import tariffs' },
+            { id:'r31', account:'Positionskonto-Consumables', desc:'Consumables for Manufacturing', values:[0,-20000,-24246,-40997,0,0,0,-45448,-13149,-410495,0,0], comment:'MIS components incl. tariffs' }
+          ]
+        },
+        {
+          id: 'c23', name: 'Production Service',
+          rows: [
+            { id:'r32', account:'Positionskonto-ProductionService', desc:'Chemicals NL', values:[-96856,-96856,-96856,-96856,-96856,-96856,-96856,-96856,-96856,-96856,-96856,-96856], comment:'Chemicals based on supply chain sheet' },
+            { id:'r33', account:'970010', desc:'Absorbed overhead cost', values:[-259319,-259319,-259319,-259319,-259319,-259319,-259319,-259319,-259319,-259319,-259319,-259319], comment:'Input Finance needed' },
+            { id:'r34', account:'Positionskonto-OtherProdCost', desc:'PPE voor medewerkers', values:[0,0,-37500,-37500,-37500,-37500,0,0,0,0,0,0], comment:'Veiligheidsschoenen 30 operators' }
+          ]
+        },
+        {
+          id: 'c24', name: 'Distribution / Opslag',
+          rows: [
+            { id:'r35', account:'812310', desc:'Postage & Courier', values:[1000,1500,1000,1500,1000,1500,1000,1500,1000,1500,1000,1500], comment:'Inventory provision syringes' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// ID counters
+let nextCatId = 100;
+let nextRowId = 1000;
+
+// Chart instances
+let barChartInst = null, pieChartInst = null, lineChartInst = null;
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(n) {
+  if (n === 0 || n === null || n === undefined) return '–';
+  return new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+}
+
+function fmtSign(n) {
+  if (n === 0 || n === null || n === undefined) return '–';
+  return new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+}
+
+function rowTotal(values) {
+  return values.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+}
+
+function activCC() {
+  return STATE.costCenters.find(c => c.id === STATE.activeCCId);
+}
+
+// ============================================================
+// RENDER SIDEBAR
+// ============================================================
+function renderSidebar() {
+  const list = document.getElementById('sidebarList');
+  list.innerHTML = '';
+  STATE.costCenters.forEach(cc => {
+    const btn = document.createElement('button');
+    btn.className = `sidebar-btn text-left px-3 py-2 rounded text-sm ${cc.id === STATE.activeCCId ? 'active' : 'text-gray-600'}`;
+    btn.innerHTML = `<div class="font-medium">${cc.name}</div><div class="text-xs opacity-70">${cc.company} · ${cc.currency}</div>`;
+    btn.onclick = () => { STATE.activeCCId = cc.id; render(); };
+    list.appendChild(btn);
+  });
+}
+
+// ============================================================
+// RENDER INFO BAR
+// ============================================================
+function renderInfoBar() {
+  const cc = activCC();
+  document.getElementById('infoBar').innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400">Cost center</span>
+      <span class="font-bold text-sm" style="color:#003d7a">${cc.name}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400">Bedrijf</span>
+      <span class="font-medium text-sm text-gray-700">${cc.company}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400">Verantwoordelijke</span>
+      <span class="font-medium text-sm text-gray-700">${cc.leader}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400">Valuta</span>
+      <span class="font-medium text-sm text-gray-700">${cc.currency}</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400">Periode</span>
+      <span class="font-medium text-sm text-gray-700">Jan – Dec 2026</span>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <span class="text-xs text-gray-400">FY Totaal OPEX</span>
+      <span class="font-bold text-sm" style="color:#003d7a" id="headerTotal">–</span>
+    </div>
+  `;
+}
+
+// ============================================================
+// RENDER TABLE
+// ============================================================
+function renderTable() {
+  const cc = activCC();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  let grandTotal = new Array(12).fill(0);
+  let rowIdx = 0;
+
+  cc.categories.forEach((cat, catI) => {
+    // Category header row
+    const catHdr = document.createElement('tr');
+    catHdr.className = 'cat-header';
+    catHdr.innerHTML = `
+      <td colspan="3" class="px-3 py-1.5">
+        <span class="mr-2 cursor-pointer" onclick="toggleCat('${cat.id}')">▾</span>
+        <span contenteditable="true" onblur="renameCat('${cat.id}', this.textContent)">${cat.name}</span>
+      </td>
+      ${MONTHS.map((m,i) => `<td class="px-2 py-1.5 text-right cat-sum-${cat.id}-${i}">–</td>`).join('')}
+      <td class="px-2 py-1.5 text-right cat-sum-${cat.id}-fy">–</td>
+      <td></td>
+      <td class="no-print px-1 py-1 text-center">
+        <button onclick="deleteCat('${cat.id}')" class="text-red-300 hover:text-red-100 text-xs" title="Categorie verwijderen">✕</button>
+      </td>
+    `;
+    tbody.appendChild(catHdr);
+
+    // Data rows
+    const catGroup = document.createElement('tbody');
+    catGroup.id = `catGroup-${cat.id}`;
+
+    cat.rows.forEach((row, rowI) => {
+      rowIdx++;
+      const tr = document.createElement('tr');
+      tr.className = 'data-row border-b border-gray-100';
+      tr.id = `row-${row.id}`;
+
+      const monthCells = MONTHS.map((m, mi) => {
+        const v = parseFloat(row.values[mi]) || 0;
+        return `<td class="px-1 py-1 text-right">
+          <input type="number" class="input-cell" value="${v || ''}" placeholder="0"
+            oninput="updateCell('${cat.id}','${row.id}',${mi},this.value)"
+            onkeydown="navCell(event,${rowIdx},${mi})">
+        </td>`;
+      }).join('');
+
+      const total = rowTotal(row.values);
+      tr.innerHTML = `
+        <td class="px-3 py-1 text-gray-400 text-right" style="font-size:0.7rem">${rowIdx}</td>
+        <td class="px-2 py-1">
+          <input class="w-full text-xs border-0 bg-transparent text-gray-600 outline-none"
+            value="${row.account}" placeholder="GL account"
+            onchange="updateMeta('${cat.id}','${row.id}','account',this.value)">
+        </td>
+        <td class="px-2 py-1 desc-cell">
+          <input class="w-full text-xs border-0 bg-transparent outline-none"
+            value="${row.desc}" placeholder="Omschrijving"
+            onchange="updateMeta('${cat.id}','${row.id}','desc',this.value)">
+        </td>
+        ${monthCells}
+        <td class="px-2 py-1 text-right font-semibold row-total-${row.id} ${total < 0 ? 'negative' : ''}" style="color:${total < 0 ? '' : '#1e3a5f'}">${fmt(total)}</td>
+        <td class="px-2 py-1">
+          <input class="w-full text-xs border-0 bg-transparent text-gray-400 outline-none"
+            value="${row.comment}" placeholder="Toelichting"
+            onchange="updateMeta('${cat.id}','${row.id}','comment',this.value)">
+        </td>
+        <td class="no-print px-1 py-1 text-center">
+          <button onclick="deleteRow('${cat.id}','${row.id}')" class="text-gray-300 hover:text-red-400 text-xs" title="Rij verwijderen">✕</button>
+        </td>
+      `;
+      catGroup.appendChild(tr);
+    });
+
+    // Add row button
+    const addRowTr = document.createElement('tr');
+    addRowTr.className = 'no-print';
+    addRowTr.innerHTML = `
+      <td colspan="17" class="px-3 py-1">
+        <button onclick="addRow('${cat.id}')" class="text-blue-500 hover:text-blue-700 text-xs">+ Rij toevoegen</button>
+      </td>
+    `;
+    catGroup.appendChild(addRowTr);
+
+    tbody.appendChild(catGroup);
+
+    // Subtotal row
+    const subTr = document.createElement('tr');
+    subTr.className = 'cat-total';
+    subTr.id = `catTotal-${cat.id}`;
+    let catTotals = new Array(12).fill(0);
+    cat.rows.forEach(r => r.values.forEach((v, i) => { catTotals[i] += parseFloat(v) || 0; }));
+    let catFY = catTotals.reduce((a,b) => a+b, 0);
+    for (let i=0;i<12;i++) grandTotal[i] += catTotals[i];
+
+    subTr.innerHTML = `
+      <td colspan="3" class="px-3 py-1.5 text-gray-600">Subtotaal: ${cat.name}</td>
+      ${catTotals.map((v,i) => `<td class="px-2 py-1.5 text-right cat-sum-${cat.id}-${i} ${v < 0 ? 'negative' : ''}">${fmt(v)}</td>`).join('')}
+      <td class="px-2 py-1.5 text-right cat-sum-${cat.id}-fy ${catFY < 0 ? 'negative' : ''}">${fmt(catFY)}</td>
+      <td></td><td class="no-print"></td>
+    `;
+    tbody.appendChild(subTr);
+
+    // Divider
+    const divTr = document.createElement('tr');
+    divTr.className = 'section-divider';
+    divTr.innerHTML = '<td colspan="17"></td>';
+    tbody.appendChild(divTr);
+  });
+
+  // Grand total row
+  const grandFY = grandTotal.reduce((a,b) => a+b, 0);
+  const gtTr = document.createElement('tr');
+  gtTr.className = 'grand-total';
+  gtTr.id = 'grandTotalRow';
+  gtTr.innerHTML = `
+    <td colspan="3" class="px-3 py-2">TOTAAL OPEX – ${activCC().name} (${activCC().currency})</td>
+    ${grandTotal.map((v,i) => `<td class="px-2 py-2 text-right grand-col-${i} ${v < 0 ? 'text-red-300' : ''}">${fmt(v)}</td>`).join('')}
+    <td class="px-2 py-2 text-right ${grandFY < 0 ? 'text-red-300' : ''}" id="grandFY">${fmt(grandFY)}</td>
+    <td></td><td class="no-print"></td>
+  `;
+  tbody.appendChild(gtTr);
+
+  // Update header total
+  const htEl = document.getElementById('headerTotal');
+  if (htEl) htEl.textContent = `${activCC().currency} ${fmt(grandFY)}`;
+}
+
+// ============================================================
+// CELL UPDATE
+// ============================================================
+function updateCell(catId, rowId, monthIdx, value) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+  const row = cat.rows.find(r => r.id === rowId);
+  row.values[monthIdx] = parseFloat(value) || 0;
+  recalcTotals(catId);
+}
+
+function updateMeta(catId, rowId, field, value) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+  const row = cat.rows.find(r => r.id === rowId);
+  row[field] = value;
+}
+
+function renameCat(catId, name) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+  cat.name = name.trim();
+}
+
+// ============================================================
+// RECALC (fast – no full re-render)
+// ============================================================
+function recalcTotals(catId) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+
+  // Row totals
+  cat.rows.forEach(row => {
+    const total = rowTotal(row.values);
+    const el = document.querySelector(`.row-total-${row.id}`);
+    if (el) {
+      el.textContent = fmt(total);
+      el.classList.toggle('negative', total < 0);
+      el.style.color = total < 0 ? '' : '#1e3a5f';
+    }
+  });
+
+  // Category subtotals
+  let catTotals = new Array(12).fill(0);
+  cat.rows.forEach(r => r.values.forEach((v,i) => { catTotals[i] += parseFloat(v) || 0; }));
+  let catFY = catTotals.reduce((a,b) => a+b, 0);
+  for (let i=0;i<12;i++) {
+    const el = document.querySelector(`.cat-sum-${catId}-${i}`);
+    if (el) { el.textContent = fmt(catTotals[i]); el.classList.toggle('negative', catTotals[i] < 0); }
+  }
+  const fyEl = document.querySelector(`.cat-sum-${catId}-fy`);
+  if (fyEl) { fyEl.textContent = fmt(catFY); fyEl.classList.toggle('negative', catFY < 0); }
+
+  // Grand totals
+  let grandTotal = new Array(12).fill(0);
+  cc.categories.forEach(c => c.rows.forEach(r => r.values.forEach((v,i) => { grandTotal[i] += parseFloat(v) || 0; })));
+  let grandFY = grandTotal.reduce((a,b) => a+b, 0);
+  for (let i=0;i<12;i++) {
+    const el = document.querySelector(`.grand-col-${i}`);
+    if (el) { el.textContent = fmt(grandTotal[i]); el.classList.toggle('text-red-300', grandTotal[i] < 0); }
+  }
+  const gFYEl = document.getElementById('grandFY');
+  if (gFYEl) { gFYEl.textContent = fmt(grandFY); gFYEl.classList.toggle('text-red-300', grandFY < 0); }
+
+  // Header total
+  const htEl = document.getElementById('headerTotal');
+  if (htEl) htEl.textContent = `${cc.currency} ${fmt(grandFY)}`;
+
+  // Update charts if visible
+  if (STATE.activeTab === 'chart') renderCharts();
+}
+
+// ============================================================
+// ADD / DELETE
+// ============================================================
+function addRow(catId) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+  cat.rows.push({ id: 'r' + (++nextRowId), account: '', desc: '', values: new Array(12).fill(0), comment: '' });
+  renderTable();
+}
+
+function deleteRow(catId, rowId) {
+  const cc = activCC();
+  const cat = cc.categories.find(c => c.id === catId);
+  if (cat.rows.length <= 1) { cat.rows[0] = { id: cat.rows[0].id, account:'', desc:'', values: new Array(12).fill(0), comment:'' }; }
+  else { cat.rows = cat.rows.filter(r => r.id !== rowId); }
+  renderTable();
+}
+
+function addCategory() {
+  const name = prompt('Naam van de nieuwe categorie:');
+  if (!name) return;
+  const cc = activCC();
+  cc.categories.push({
+    id: 'c' + (++nextCatId), name,
+    rows: [{ id: 'r' + (++nextRowId), account:'', desc:'', values: new Array(12).fill(0), comment:'' }]
+  });
+  renderTable();
+}
+
+function deleteCat(catId) {
+  if (!confirm('Categorie verwijderen?')) return;
+  const cc = activCC();
+  cc.categories = cc.categories.filter(c => c.id !== catId);
+  renderTable();
+}
+
+function toggleCat(catId) {
+  const grp = document.getElementById(`catGroup-${catId}`);
+  if (grp) grp.style.display = grp.style.display === 'none' ? '' : 'none';
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function renderCharts() {
+  const cc = activCC();
+
+  // Compute monthly and category totals
+  let monthlyTotals = new Array(12).fill(0);
+  let catNames = [], catTotals = [], catColors = [];
+  const colors = ['#003d7a','#0066cc','#2563eb','#60a5fa','#93c5fd','#bfdbfe','#1e3a5f','#1d4ed8','#3b82f6','#7dd3fc'];
+
+  cc.categories.forEach((cat, i) => {
+    let sum = 0;
+    cat.rows.forEach(r => r.values.forEach((v, mi) => {
+      const n = parseFloat(v) || 0;
+      monthlyTotals[mi] += n;
+      sum += n;
+    }));
+    catNames.push(cat.name.length > 25 ? cat.name.substring(0,25)+'…' : cat.name);
+    catTotals.push(Math.abs(sum));
+    catColors.push(colors[i % colors.length]);
+  });
+
+  // Bar chart – monthly
+  if (barChartInst) barChartInst.destroy();
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  barChartInst = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: `OPEX ${cc.currency}`,
+        data: monthlyTotals,
+        backgroundColor: monthlyTotals.map(v => v < 0 ? '#fca5a5' : '#003d7a'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => fmt(v) } } }
+    }
+  });
+
+  // Pie chart – categories (absolute values)
+  if (pieChartInst) pieChartInst.destroy();
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  pieChartInst = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: catNames,
+      datasets: [{ data: catTotals, backgroundColor: catColors, borderWidth: 2 }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 10 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmt(ctx.raw)} ${cc.currency}` } }
+      }
+    }
+  });
+
+  // Line chart – cumulative
+  if (lineChartInst) lineChartInst.destroy();
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  let cumulative = [], running = 0;
+  monthlyTotals.forEach(v => { running += v; cumulative.push(running); });
+  lineChartInst = new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: `Cumulatief OPEX ${cc.currency}`,
+        data: cumulative,
+        borderColor: '#003d7a',
+        backgroundColor: 'rgba(0,61,122,0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: v => fmt(v) } } }
+    }
+  });
+}
+
+// ============================================================
+// SUMMARY VIEW
+// ============================================================
+function renderSummary() {
+  const container = document.getElementById('summaryContent');
+  let html = `<div class="overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr style="background:#003d7a;color:white">
+          <th class="px-4 py-2 text-left">Cost Center</th>
+          <th class="px-3 py-2 text-left">Leider</th>
+          <th class="px-3 py-2 text-left">Valuta</th>
+          ${MONTHS.map(m => `<th class="px-2 py-2 text-right">${m}</th>`).join('')}
+          <th class="px-3 py-2 text-right font-bold">FY 2026</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  STATE.costCenters.forEach((cc, idx) => {
+    let monthlyTotals = new Array(12).fill(0);
+    cc.categories.forEach(cat => cat.rows.forEach(r => r.values.forEach((v,i) => {
+      monthlyTotals[i] += parseFloat(v) || 0;
+    })));
+    const fy = monthlyTotals.reduce((a,b) => a+b, 0);
+    const bg = idx % 2 === 0 ? '#f8fafc' : 'white';
+    html += `<tr style="background:${bg}">
+      <td class="px-4 py-2 font-semibold" style="color:#003d7a">${cc.name}</td>
+      <td class="px-3 py-2 text-gray-600">${cc.leader}</td>
+      <td class="px-3 py-2 text-gray-500">${cc.currency}</td>
+      ${monthlyTotals.map(v => `<td class="px-2 py-2 text-right text-gray-700 ${v < 0 ? 'text-red-600' : ''}">${fmt(v)}</td>`).join('')}
+      <td class="px-3 py-2 text-right font-bold ${fy < 0 ? 'text-red-600' : ''}" style="color:${fy >= 0 ? '#003d7a' : ''}">${fmt(fy)}</td>
+    </tr>`;
+
+    // Per category
+    cc.categories.forEach(cat => {
+      let catMo = new Array(12).fill(0);
+      cat.rows.forEach(r => r.values.forEach((v,i) => { catMo[i] += parseFloat(v) || 0; }));
+      const catFY = catMo.reduce((a,b) => a+b, 0);
+      if (catFY === 0) return;
+      html += `<tr style="background:${bg}">
+        <td class="px-4 py-1 pl-8 text-xs text-gray-400">↳ ${cat.name}</td>
+        <td colspan="2" class="px-3 py-1"></td>
+        ${catMo.map(v => `<td class="px-2 py-1 text-right text-xs text-gray-500 ${v < 0 ? 'text-red-400' : ''}">${fmt(v)}</td>`).join('')}
+        <td class="px-3 py-1 text-right text-xs ${catFY < 0 ? 'text-red-500' : 'text-gray-600'}">${fmt(catFY)}</td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab, btnEl) {
+  STATE.activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  document.getElementById('tab-opex').classList.toggle('hidden', tab !== 'opex');
+  document.getElementById('tab-chart').classList.toggle('hidden', tab !== 'chart');
+  document.getElementById('tab-summary').classList.toggle('hidden', tab !== 'summary');
+
+  if (tab === 'chart') renderCharts();
+  if (tab === 'summary') renderSummary();
+}
+
+function showSummary() {
+  document.getElementById('summaryTabBtn').click();
+  switchTab('summary', document.getElementById('summaryTabBtn'));
+}
+
+// ============================================================
+// KEYBOARD NAV (arrow keys in table)
+// ============================================================
+function navCell(e, rowIdx, colIdx) {
+  if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Tab'].includes(e.key)) return;
+  // Simple tab/enter navigation
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+  const cc = activCC();
+  let rows = [['Account','Omschrijving',...MONTHS,'FY 2026','Toelichting']];
+  cc.categories.forEach(cat => {
+    rows.push([`=== ${cat.name} ===`]);
+    cat.rows.forEach(row => {
+      if (!row.desc && row.values.every(v => !v)) return;
+      rows.push([row.account, row.desc, ...row.values, rowTotal(row.values), row.comment]);
+    });
+    let catTotals = new Array(12).fill(0);
+    cat.rows.forEach(r => r.values.forEach((v,i) => { catTotals[i] += parseFloat(v)||0; }));
+    rows.push(['','SUBTOTAAL',...catTotals, catTotals.reduce((a,b)=>a+b,0),'']);
+    rows.push([]);
+  });
+  let csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `OPEX_${cc.id}_2026.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// MAIN RENDER
+// ============================================================
+function render() {
+  renderSidebar();
+  renderInfoBar();
+  renderTable();
+  if (STATE.activeTab === 'chart') renderCharts();
+  if (STATE.activeTab === 'summary') renderSummary();
+}
+
+// Init
+render();
+</script>
+</body>
+</html>

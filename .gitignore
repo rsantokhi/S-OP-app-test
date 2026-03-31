@@ -1,0 +1,24 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Budget Files (keep originals locally, don't need in repo)
+Budget Files/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
