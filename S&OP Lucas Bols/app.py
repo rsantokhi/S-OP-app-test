@@ -55,15 +55,15 @@ if "saop_cycle" not in st.session_state:
 
 # Custom sidebar
 with st.sidebar:
-    # Logo / Branding
+    # Logo / Branding - Quicksilver Style
     st.markdown(
         f"""
-        <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid {COLORS['border']};">
-            <div style="font-size: 24px; font-weight: 700; color: {COLORS['primary_blue']}; margin-bottom: 4px;">
-                Plan<span style="font-weight: 300;">Flow</span>
+        <div style="margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid {COLORS['border']};">
+            <div style="font-size: 20px; font-weight: 700; color: {COLORS['text_primary']}; margin-bottom: 6px; letter-spacing: -0.3px;">
+                PlanFlow
             </div>
-            <div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: {COLORS['text_tertiary']};">
-                S&OP Planning
+            <div style="font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: {COLORS['text_tertiary']}; font-weight: 600;">
+                S&OP Planning Suite
             </div>
         </div>
         """,
@@ -122,19 +122,19 @@ with st.sidebar:
     if st.page_link("pages/11_Settings.py", label="Settings"):
         pass
 
-    # Footer / User
+    # Footer / User - Professional styling
     st.markdown(
         f"""
         <div style="position: fixed; bottom: 20px; left: 20px; right: 20px;
-                    display: flex; align-items: center; gap: 10px;
-                    padding-top: 12px; border-top: 1px solid {COLORS['border']};">
-            <div style="width: 32px; height: 32px; border-radius: 50%;
-                        background: {COLORS['primary_blue']}; color: white;
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 12px; font-weight: 600;">JK</div>
+                    display: flex; align-items: center; gap: 12px;
+                    padding-top: 16px; border-top: 1px solid {COLORS['border']};">
+            <div style="width: 40px; height: 40px; border-radius: 50%;
+                        background: linear-gradient(135deg, {COLORS['primary_blue']}, {COLORS['accent_blue']});
+                        color: white; display: flex; align-items: center; justify-content: center;
+                        font-size: 14px; font-weight: 700;">JK</div>
             <div>
-                <div style="font-size: 12px; font-weight: 600; color: {COLORS['text_primary']};">Jan Koops</div>
-                <div style="font-size: 10px; color: {COLORS['text_tertiary']};">S&OP Planner</div>
+                <div style="font-size: 13px; font-weight: 700; color: {COLORS['text_primary']};">Jan Koops</div>
+                <div style="font-size: 11px; color: {COLORS['text_tertiary']}; font-weight: 500;">S&OP Planner</div>
             </div>
         </div>
         """,
@@ -143,7 +143,14 @@ with st.sidebar:
 
 
 # Main content area
-st.title("PlanFlow — Sales & Operations Planning")
+st.markdown(
+    f'<h1 style="color: {COLORS["text_primary"]}; font-weight: 700; margin-bottom: 8px;">PlanFlow</h1>',
+    unsafe_allow_html=True
+)
+st.markdown(
+    f'<p style="color: {COLORS["text_secondary"]}; font-size: 16px; margin-bottom: 24px;">Sales & Operations Planning Suite for Lucas Bols</p>',
+    unsafe_allow_html=True
+)
 
 st.markdown(
     f"""

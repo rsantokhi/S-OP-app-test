@@ -156,12 +156,16 @@ with col1:
     )
     fig_revenue.update_layout(
         hovermode="x unified",
-        plot_bgcolor="rgba(245,245,242,0.5)",
+        plot_bgcolor="rgba(248,249,252,0.5)",
         paper_bgcolor="white",
         font=dict(size=11),
         height=350,
         showlegend=True,
+        template="plotly_white",
     )
+    fig_revenue.update_traces(line=dict(width=2))
+    fig_revenue.update_xaxes(showgrid=True, gridwidth=1, gridcolor="rgba(212, 216, 232, 0.3)")
+    fig_revenue.update_yaxes(showgrid=True, gridwidth=1, gridcolor="rgba(212, 216, 232, 0.3)")
     st.plotly_chart(fig_revenue, use_container_width=True)
 
 # ERP Sync Status

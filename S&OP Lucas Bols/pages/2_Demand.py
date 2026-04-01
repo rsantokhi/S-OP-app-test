@@ -231,7 +231,7 @@ if st.session_state.selected_item and st.session_state.selected_item in items["i
                 y=list(forecast_values[:3]),
                 mode="lines+markers",
                 name="Forecast",
-                line=dict(color=COLORS["accent_orange"], width=2, dash="dash"),
+                line=dict(color=COLORS["success_green"], width=2, dash="dash"),
                 marker=dict(size=8)
             ))
 
@@ -241,8 +241,10 @@ if st.session_state.selected_item and st.session_state.selected_item in items["i
             yaxis_title="Quantity (units)",
             hovermode="x unified",
             height=400,
-            plot_bgcolor="rgba(245,245,242,0.5)",
-            font=dict(size=11)
+            plot_bgcolor="rgba(248,249,252,0.5)",
+            font=dict(size=11),
+            title_font_size=14,
+            showlegend=True
         )
 
         st.plotly_chart(fig, use_container_width=True)
