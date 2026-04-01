@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PlanFlow — Kostenraming AWS</title>
+<link href="https://fonts.googleapis.com/css2?family=Georgia&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#0066CC;--turq:#00C3C8;--pink:#F3A1C6;--yellow:#FFFF82;
+  --grey:#DEDEDE;--lgrey:#f5f5f2;--white:#fff;
+  --text:#0066CC;--text2:#4a6080;--text3:#8898aa;
+  --border:#e0e8f0;--border2:#c8d8e8;
+  --green:#007744;--green-bg:#eefff6;--green-border:#88ddbb;
+  --amber:#885500;--amber-bg:#fffbee;--amber-border:#ffdd88;
+  --red:#cc2200;--red-bg:#fff0ee;--red-border:#ffb8b0;
+  --serif:Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--lgrey);color:var(--text);font-family:var(--sans);font-size:13px}
+
+.cover{background:var(--blue);padding:40px 60px 36px;position:relative;overflow:hidden}
+.cover-grad{position:absolute;top:0;right:0;width:38%;height:100%;background:linear-gradient(135deg,var(--turq),var(--pink),var(--yellow));opacity:.85}
+.cover-grid{position:absolute;top:0;right:0;width:38%;height:100%;background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);background-size:40px 40px}
+.logo{font-family:var(--serif);font-size:24px;color:#fff;position:relative;z-index:2;margin-bottom:16px}
+.logo span{font-family:var(--sans);font-weight:300}
+.cover-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);position:relative;z-index:2;margin-bottom:4px}
+.cover-h{font-family:var(--serif);font-size:32px;color:#fff;position:relative;z-index:2;line-height:1.2;max-width:55%}
+.cover-sub{font-size:13px;color:rgba(255,255,255,.7);position:relative;z-index:2;margin-top:8px;max-width:55%;font-weight:300;line-height:1.5}
+.cover-pills{display:flex;gap:8px;margin-top:18px;position:relative;z-index:2;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:3px 11px;border-radius:100px;font-size:11px;color:rgba(255,255,255,.8);font-family:var(--mono)}
+
+.doc{max-width:1060px;margin:0 auto;padding:40px 60px}
+
+.section{margin-bottom:48px}
+.section-num{font-family:var(--serif);font-size:48px;color:var(--grey);line-height:1}
+.section-title{font-family:var(--serif);font-size:24px;color:var(--blue);margin-bottom:4px}
+.section-sub{font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:20px}
+.divider{height:3px;background:linear-gradient(to right,var(--blue),var(--turq),transparent);border-radius:2px;margin-bottom:20px}
+
+/* SCENARIO CARDS */
+.scenario-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.sc-card{background:var(--white);border:2px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s;cursor:pointer}
+.sc-card:hover{border-color:var(--blue)}
+.sc-card.active{border-color:var(--blue)}
+.sc-head{padding:16px 18px;border-bottom:1px solid var(--border)}
+.sc-head.starter{background:linear-gradient(135deg,var(--green-bg),#f0fff8)}
+.sc-head.productie{background:linear-gradient(135deg,#eef4ff,#e8f4ff)}
+.sc-head.enterprise{background:linear-gradient(135deg,rgba(0,195,200,.08),rgba(243,161,198,.08))}
+.sc-label{font-size:9px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.sc-name{font-family:var(--serif);font-size:20px;color:var(--blue)}
+.sc-sub{font-size:11px;color:var(--text2);margin-top:2px;font-weight:300}
+.sc-price{padding:16px 18px;border-bottom:1px solid var(--border)}
+.sc-amount{font-family:var(--serif);font-size:36px;color:var(--blue);letter-spacing:-1px;line-height:1}
+.sc-per{font-size:12px;color:var(--text3);margin-top:2px}
+.sc-users{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);background:var(--lgrey);padding:3px 9px;border-radius:100px;border:1px solid var(--border);margin-top:8px}
+.sc-breakdown{padding:14px 18px}
+.sc-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:12px}
+.sc-row:last-child{border-bottom:none;font-weight:600;padding-top:8px;color:var(--blue)}
+.sc-row-label{color:var(--text2)}
+.sc-row-val{font-family:var(--mono);color:var(--text)}
+.sc-note{padding:10px 18px;background:var(--lgrey);font-size:11px;color:var(--text3);border-top:1px solid var(--border)}
+
+/* DETAIL TABLE */
+.detail-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.detail-head{padding:12px 18px;border-bottom:1px solid var(--border);background:linear-gradient(to right,rgba(0,102,204,.04),transparent);display:flex;align-items:center;justify-content:space-between}
+.detail-title{font-size:12px;font-weight:600;color:var(--blue)}
+.detail-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 14px;text-align:left;font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:2px solid var(--border);background:linear-gradient(to bottom,rgba(0,102,204,.03),transparent)}
+.tbl th.r{text-align:right}
+.tbl td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+.tbl td.r{text-align:right;font-family:var(--mono)}
+.tbl td.name{color:var(--blue);font-weight:500}
+.tbl td.mono{font-family:var(--mono);font-size:11px}
+.tbl tr:hover td{background:rgba(0,102,204,.02)}
+.tbl tr.total-row td{background:rgba(0,102,204,.05);font-weight:700;color:var(--blue);border-top:2px solid var(--border2)}
+
+/* ORACLE vs POSTGRES */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.compare-card{border-radius:10px;padding:18px;border:2px solid transparent}
+.compare-card.pg{background:var(--green-bg);border-color:var(--green-border)}
+.compare-card.ora{background:var(--red-bg);border-color:var(--red-border)}
+.compare-title{font-family:var(--serif);font-size:16px;margin-bottom:4px}
+.compare-price{font-family:var(--serif);font-size:28px;letter-spacing:-.5px;line-height:1.1;margin:10px 0 4px}
+.compare-detail{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.compare-verdict{font-size:12px;margin-top:10px;padding:8px 10px;border-radius:6px;line-height:1.5}
+.compare-card.pg .compare-verdict{background:rgba(0,119,68,.08);color:var(--green)}
+.compare-card.ora .compare-verdict{background:rgba(204,34,0,.08);color:var(--red)}
+
+/* CALLOUT */
+.callout{background:linear-gradient(135deg,var(--blue),#0088dd);color:#fff;border-radius:9px;padding:18px 22px;margin:14px 0;position:relative;overflow:hidden}
+.callout::after{content:'';position:absolute;top:0;right:0;width:30%;height:100%;background:linear-gradient(135deg,var(--turq),var(--pink));opacity:.2}
+.callout-title{font-family:var(--serif);font-size:16px;margin-bottom:6px;position:relative;z-index:1}
+.callout-body{font-size:12px;opacity:.9;line-height:1.6;position:relative;z-index:1}
+.hl{background:var(--yellow);color:var(--blue);padding:1px 6px;border-radius:3px;font-weight:700;font-size:11px}
+
+/* SAVINGS */
+.savings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.saving{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px;border-top:3px solid var(--turq)}
+.saving-label{font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.saving-val{font-family:var(--serif);font-size:22px;color:var(--blue)}
+.saving-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* INFO ROW */
+.info-row{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.info-icon{flex-shrink:0;margin-top:1px}
+.info-text{flex:1;color:var(--text2);line-height:1.5}
+
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);font-weight:600;padding:2px 7px;border-radius:100px}
+.badge-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.badge-blue{background:#eef4ff;color:var(--blue);border:1px solid var(--border2)}
+
+.footer{background:var(--blue);padding:24px 60px;display:flex;justify-content:space-between;align-items:center;margin-top:60px}
+.footer-logo{font-family:var(--serif);font-size:18px;color:#fff}
+.footer-logo span{font-family:var(--sans);font-weight:300}
+.footer-note{font-size:10px;color:rgba(255,255,255,.4);text-align:right}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-grad"></div>
+  <div class="cover-grid"></div>
+  <div class="logo">Plan<span>Flow</span></div>
+  <div class="cover-tag">Finext Digital Finance — AWS Kostenraming</div>
+  <h1 class="cover-h">Wat kost PlanFlow in productie per maand?</h1>
+  <p class="cover-sub">Eerlijke doorrekening van alle AWS software- en infrastructuurkosten. Drie scenario's — van PoC tot enterprise schaal.</p>
+  <div class="cover-pills">
+    <span class="pill">ECS Fargate</span>
+    <span class="pill">RDS PostgreSQL</span>
+    <span class="pill">ALB + WAF</span>
+    <span class="pill">GitHub Actions</span>
+    <span class="pill">eu-west-1</span>
+    <span class="pill">Prijzen maart 2026</span>
+  </div>
+</div>
+
+<div class="doc">
+
+<!-- ═══ SCENARIO VERGELIJKING ═══ -->
+<div class="section">
+  <div class="section-num">01</div>
+  <div class="section-title">Drie scenario's — kies je startpunt</div>
+  <div class="section-sub">AWS eu-west-1 · On-demand pricing · PostgreSQL RDS · ECS Fargate Linux/ARM</div>
+  <div class="divider"></div>
+
+  <div class="scenario-grid">
+
+    <!-- STARTER -->
+    <div class="sc-card">
+      <div class="sc-head starter">
+        <div class="sc-label">Scenario 1</div>
+        <div class="sc-name">Starter</div>
+        <div class="sc-sub">PoC · eerste productieversie · 1 klant</div>
+      </div>
+      <div class="sc-price">
+        <div class="sc-amount">€119</div>
+        <div class="sc-per">per maand · incl. alle AWS services</div>
+        <div><span class="sc-users">◎ 5–15 gebruikers</span></div>
+      </div>
+      <div class="sc-breakdown">
+        <div class="sc-row"><span class="sc-row-label">ECS Fargate (2 tasks)</span><span class="sc-row-val">€47</span></div>
+        <div class="sc-row"><span class="sc-row-label">RDS PostgreSQL (Single-AZ)</span><span class="sc-row-val">€35</span></div>
+        <div class="sc-row"><span class="sc-row-label">Load Balancer (ALB)</span><span class="sc-row-val">€18</span></div>
+        <div class="sc-row"><span class="sc-row-label">NAT Gateway</span><span class="sc-row-val">€8</span></div>
+        <div class="sc-row"><span class="sc-row-label">Monitoring + ECR + Secrets</span><span class="sc-row-val">€9</span></div>
+        <div class="sc-row"><span class="sc-row-label">S3 opslag</span><span class="sc-row-val">€2</span></div>
+        <div class="sc-row"><span class="sc-row-label">Totaal</span><span class="sc-row-val">€119</span></div>
+      </div>
+      <div class="sc-note">⚠ Single-AZ DB — geen automatische failover. Prima voor PoC, niet voor kritieke productie.</div>
+    </div>
+
+    <!-- PRODUCTIE -->
+    <div class="sc-card active">
+      <div class="sc-head productie">
+        <div class="sc-label">Scenario 2 — Aanbevolen</div>
+        <div class="sc-name">Productie</div>
+        <div class="sc-sub">Volledige S&OP · Multi-user · Oracle Fusion</div>
+      </div>
+      <div class="sc-price">
+        <div class="sc-amount">€452</div>
+        <div class="sc-per">per maand · incl. alle AWS services</div>
+        <div><span class="sc-users">◎ 15–50 gebruikers</span></div>
+      </div>
+      <div class="sc-breakdown">
+        <div class="sc-row"><span class="sc-row-label">ECS Fargate (4 tasks)</span><span class="sc-row-val">€188</span></div>
+        <div class="sc-row"><span class="sc-row-label">RDS PostgreSQL (Multi-AZ)</span><span class="sc-row-val">€198</span></div>
+        <div class="sc-row"><span class="sc-row-label">Load Balancer (ALB)</span><span class="sc-row-val">€25</span></div>
+        <div class="sc-row"><span class="sc-row-label">NAT Gateway</span><span class="sc-row-val">€15</span></div>
+        <div class="sc-row"><span class="sc-row-label">Monitoring + ECR + Secrets</span><span class="sc-row-val">€21</span></div>
+        <div class="sc-row"><span class="sc-row-label">S3 opslag</span><span class="sc-row-val">€5</span></div>
+        <div class="sc-row"><span class="sc-row-label">Totaal</span><span class="sc-row-val">€452</span></div>
+      </div>
+      <div class="sc-note">✓ Multi-AZ DB · automatische failover · blue-green deployment · GitHub Actions gratis tier</div>
+    </div>
+
+    <!-- ENTERPRISE -->
+    <div class="sc-card">
+      <div class="sc-head enterprise">
+        <div class="sc-label">Scenario 3</div>
+        <div class="sc-name">Enterprise</div>
+        <div class="sc-sub">Multi-tenant · 3–10 klanten · auto-scaling</div>
+      </div>
+      <div class="sc-price">
+        <div class="sc-amount">€1.519</div>
+        <div class="sc-per">per maand · incl. alle AWS services</div>
+        <div><span class="sc-users">◎ 50–200 gebruikers</span></div>
+      </div>
+      <div class="sc-breakdown">
+        <div class="sc-row"><span class="sc-row-label">ECS Fargate (8 tasks)</span><span class="sc-row-val">€752</span></div>
+        <div class="sc-row"><span class="sc-row-label">RDS PostgreSQL (Multi-AZ XL)</span><span class="sc-row-val">€586</span></div>
+        <div class="sc-row"><span class="sc-row-label">Load Balancer (ALB)</span><span class="sc-row-val">€45</span></div>
+        <div class="sc-row"><span class="sc-row-label">NAT Gateway</span><span class="sc-row-val">€35</span></div>
+        <div class="sc-row"><span class="sc-row-label">Monitoring + ECR + Secrets</span><span class="sc-row-val">€46</span></div>
+        <div class="sc-row"><span class="sc-row-label">S3 + CI/CD</span><span class="sc-row-val">€55</span></div>
+        <div class="sc-row"><span class="sc-row-label">Totaal</span><span class="sc-row-val">€1.519</span></div>
+      </div>
+      <div class="sc-note">✓ Auto-scaling · dedicated monitoring · WAF · meerdere klantomgevingen</div>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Vergelijk dit met Streamline of Pigment</div>
+    <div class="callout-body">Streamline kost €2.000–€8.000 per jaar aan licenties (plus per-user kosten), zonder Oracle Fusion integratie en zonder multi-user web toegang. Pigment kost €30.000–€60.000 per jaar. PlanFlow op AWS kost <span class="hl">€452/maand = €5.424/jaar</span> voor de volledige productiestack — en jij bezit de applicatie volledig. De enige lopende kosten zijn de AWS infrastructuur.</div>
+  </div>
+</div>
+
+<!-- ═══ ORACLE vs POSTGRESQL ═══ -->
+<div class="section">
+  <div class="section-num">02</div>
+  <div class="section-title">Kritieke keuze: Oracle DB of PostgreSQL op AWS?</div>
+  <div class="section-sub">De database op AWS is niet hetzelfde als Oracle Fusion — Oracle Fusion blijft altijd de ERP-backend</div>
+  <div class="divider"></div>
+
+  <div class="compare-grid">
+    <div class="compare-card pg">
+      <div class="compare-title" style="color:var(--green)">✓ PostgreSQL op AWS RDS</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Aanbevolen voor PlanFlow data</div>
+      <div class="compare-price" style="color:var(--green)">€185<span style="font-size:14px;color:var(--text3)">/maand</span></div>
+      <div class="compare-detail">db.m6g.large · Multi-AZ · 100GB · eu-west-1</div>
+      <div class="compare-verdict">Open source, geen licentiekosten, volledig compatibel met onze Node.js stack. Bewezen schaalbaar tot miljoenen rijen. <strong>Dit is de slimme keuze voor PlanFlow's eigen data.</strong></div>
+    </div>
+    <div class="compare-card ora">
+      <div class="compare-title" style="color:var(--red)">⚠ Oracle DB op AWS RDS</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Alleen als klant dit vereist</div>
+      <div class="compare-price" style="color:var(--red)">€700–€900<span style="font-size:14px;color:var(--text3)">/maand</span></div>
+      <div class="compare-detail">db.m5.large · License Included · Single-AZ · eu-west-1</div>
+      <div class="compare-verdict">4–5× duurder dan PostgreSQL voor hetzelfde werkprofiel. Alleen kiezen als de klant Oracle BYOL heeft én dit contractueel vereist is. <strong>Vermijd tenzij er een harde reden is.</strong></div>
+    </div>
+  </div>
+
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px">
+    <div style="font-weight:600;color:var(--blue);margin-bottom:10px;font-size:13px">Hoe de twee Oracle systemen zich tot elkaar verhouden</div>
+    <div class="info-row"><span class="info-icon">🔴</span><div class="info-text"><strong>Oracle Fusion Cloud</strong> — de ERP van de klant. Hier halen we items, voorraad en PO's op via de REST API. Dit beheren wij NIET — dat is de klant's systeem. Kosten: €0 voor ons (klant betaalt licentie).</div></div>
+    <div class="info-row"><span class="info-icon">🐘</span><div class="info-text"><strong>PostgreSQL op AWS RDS</strong> — onze eigen applicatiedatabase. Hier slaan we forecasts, PO workflows, gebruikers en audit logs op. Dit beheren wij wel. Kosten: €185/maand (Multi-AZ productie).</div></div>
+    <div class="info-row" style="border:none"><span class="info-icon">✓</span><div class="info-text">Deze twee systemen werken naast elkaar — ze vervangen elkaar niet. PlanFlow is de planning laag. Oracle Fusion is de transactionele ERP laag.</div></div>
+  </div>
+</div>
+
+<!-- ═══ KOSTENOPTIMALISATIE ═══ -->
+<div class="section">
+  <div class="section-num">03</div>
+  <div class="section-title">Hoe je de kosten verder verlaagt</div>
+  <div class="section-sub">AWS biedt meerdere manieren om 20–50% te besparen zodra het gebruik stabiel is</div>
+  <div class="divider"></div>
+
+  <div class="savings-grid">
+    <div class="saving">
+      <div class="saving-label">AWS Savings Plans</div>
+      <div class="saving-val">30–50%</div>
+      <div class="saving-sub">1-jaar commitment op Fargate compute. Vanaf €300/maand stabiel gebruik de moeite waard.</div>
+    </div>
+    <div class="saving">
+      <div class="saving-label">RDS Reserved Instance</div>
+      <div class="saving-val">30–40%</div>
+      <div class="saving-sub">1-jaar reservering op de RDS instance. Op productie snel terugverdiend.</div>
+    </div>
+    <div class="saving">
+      <div class="saving-label">Fargate Spot</div>
+      <div class="saving-val">tot 70%</div>
+      <div class="saving-sub">Voor batch jobs (forecast berekeningen) — niet voor de live applicatie zelf.</div>
+    </div>
+  </div>
+
+  <div class="detail-card">
+    <div class="detail-head">
+      <div class="detail-title">Volledige kostenopbouw — Productie scenario</div>
+      <div class="detail-sub">€452/maand · na 1 jaar Savings Plan: ~€310/maand</div>
+    </div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>AWS Service</th>
+          <th>Configuratie</th>
+          <th>Waarom nodig</th>
+          <th class="r">€/maand</th>
+          <th class="r">Na Savings Plan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="name">ECS Fargate</td><td class="mono">4 tasks · 1vCPU · 2GB · 24/7</td><td>Node.js applicatie containers (blue+green)</td><td class="r">€188</td><td class="r" style="color:var(--green)">€110</td></tr>
+        <tr><td class="name">RDS PostgreSQL</td><td class="mono">db.m6g.large · Multi-AZ · 100GB</td><td>Applicatie DB — forecasts, PO's, audit log</td><td class="r">€198</td><td class="r" style="color:var(--green)">€130</td></tr>
+        <tr><td class="name">Application Load Balancer</td><td class="mono">1 ALB · HTTPS · eu-west-1</td><td>Blue-green routing + SSL termination</td><td class="r">€25</td><td class="r">€25</td></tr>
+        <tr><td class="name">NAT Gateway</td><td class="mono">1 AZ · ~50GB data</td><td>Containers → internet (Oracle Fusion API)</td><td class="r">€15</td><td class="r">€15</td></tr>
+        <tr><td class="name">CloudWatch</td><td class="mono">Logs + metrics + alarms</td><td>Monitoring, alerting, log opslag</td><td class="r">€12</td><td class="r">€12</td></tr>
+        <tr><td class="name">AWS Secrets Manager</td><td class="mono">6 secrets · rotatie</td><td>DB credentials, Fusion API keys, Azure AD</td><td class="r">€4</td><td class="r">€4</td></tr>
+        <tr><td class="name">ECR (Container Registry)</td><td class="mono">~5GB images</td><td>Docker images opslaan</td><td class="r">€5</td><td class="r">€5</td></tr>
+        <tr><td class="name">S3</td><td class="mono">~20GB · exports</td><td>Rapportages, DB exports, backups</td><td class="r">€5</td><td class="r">€5</td></tr>
+        <tr class="total-row"><td>Totaal on-demand</td><td></td><td></td><td class="r">€452</td><td class="r" style="color:var(--green)">~€306</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Wat zit er NIET in deze kosten?</div>
+    <div class="callout-body">
+      <strong>Oracle Fusion Cloud licentie</strong> — dit is de klant's eigen ERP contract, niet onze kosten. &nbsp;|&nbsp;
+      <strong>Azure AD licentie</strong> — zit in de klant's Microsoft 365 abonnement. &nbsp;|&nbsp;
+      <strong>Domein + SSL certificaat</strong> — domein ~€15/jaar via Route53, SSL gratis via AWS ACM. &nbsp;|&nbsp;
+      <strong>Ontwikkelkosten</strong> — dit document gaat alleen over software/infra kosten per maand.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SAMENVATTING ═══ -->
+<div class="section">
+  <div class="section-num">04</div>
+  <div class="section-title">Samenvatting & aanbeveling</div>
+  <div class="section-sub">Wat te kiezen en wanneer</div>
+  <div class="divider"></div>
+
+  <div class="detail-card">
+    <table class="tbl">
+      <thead>
+        <tr><th>Fase</th><th>Scenario</th><th>Gebruikers</th><th>DB</th><th class="r">Kosten/maand</th><th>Wanneer</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name">PoC / MVP</td>
+          <td><span class="badge badge-green">Starter</span></td>
+          <td>5–15</td>
+          <td class="mono">Single-AZ</td>
+          <td class="r" style="color:var(--green);font-family:var(--mono)">€119</td>
+          <td style="font-size:11px;color:var(--text2)">Server opzetten, eerste klant testen, Oracle Fusion koppelen</td>
+        </tr>
+        <tr>
+          <td class="name">Productie</td>
+          <td><span class="badge badge-blue">Productie ★</span></td>
+          <td>15–50</td>
+          <td class="mono">Multi-AZ</td>
+          <td class="r" style="color:var(--blue);font-family:var(--mono)">€452</td>
+          <td style="font-size:11px;color:var(--text2)">Go-live eerste klant, volledige S&OP workflow, SLA-waardig</td>
+        </tr>
+        <tr>
+          <td class="name">Groei</td>
+          <td><span class="badge badge-green">Enterprise</span></td>
+          <td>50–200</td>
+          <td class="mono">Multi-AZ XL</td>
+          <td class="r" style="color:var(--turq);font-family:var(--mono)">€1.519</td>
+          <td style="font-size:11px;color:var(--text2)">Meerdere klanten, multi-tenant, volledige auto-scaling</td>
+        </tr>
+        <tr>
+          <td class="name">Na Savings Plan</td>
+          <td><span class="badge badge-green">Productie geoptim.</span></td>
+          <td>15–50</td>
+          <td class="mono">Multi-AZ</td>
+          <td class="r" style="color:var(--green);font-family:var(--mono)">~€310</td>
+          <td style="font-size:11px;color:var(--text2)">Na 12 maanden stabiel gebruik — 1jr Savings Plan activeren</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background:var(--white);border:2px solid var(--blue);border-radius:10px;padding:20px 22px;margin-top:4px">
+    <div style="font-family:var(--serif);font-size:17px;color:var(--blue);margin-bottom:12px">Advies: start met Starter, schakel na eerste klant naar Productie</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="info-row" style="border-bottom:1px solid var(--border)"><span class="info-icon">1️⃣</span><div class="info-text"><strong>Maand 1–2:</strong> Starter scenario (€119/maand). Server optuigen, Oracle Fusion koppelen, Azure AD testen. Geen risico, minimale kosten.</div></div>
+      <div class="info-row" style="border-bottom:1px solid var(--border)"><span class="info-icon">2️⃣</span><div class="info-text"><strong>Maand 3 (go-live):</strong> Upgrade naar Productie (€452/maand). Multi-AZ database aan, blue-green deployment actief, eerste echte gebruikers.</div></div>
+      <div class="info-row" style="border-bottom:1px solid var(--border)"><span class="info-icon">3️⃣</span><div class="info-text"><strong>Maand 12:</strong> AWS Savings Plan activeren. Kosten dalen naar ~€310/maand zonder iets aan de architectuur te veranderen.</div></div>
+      <div class="info-row" style="border:none"><span class="info-icon">4️⃣</span><div class="info-text"><strong>Bij tweede klant:</strong> Enterprise scenario overwegen óf multi-tenant aanpak in dezelfde stack — afhankelijk van isolatievereisten van de klant.</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <div>
+    <div class="footer-logo">Plan<span>Flow</span></div>
+    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;letter-spacing:1px">POWER TO THE FINANCIAL</div>
+  </div>
+  <div class="footer-note">
+    Finext Digital Finance · AWS Kostenraming<br>
+    Prijzen gebaseerd op AWS eu-west-1 · maart 2026<br>
+    Actuele prijzen via calculator.aws
+  </div>
+</div>
+
+</body>
+</html>

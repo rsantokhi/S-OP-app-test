@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PlanFlow — Technische Architectuur</title>
+<link href="https://fonts.googleapis.com/css2?family=Georgia&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#0066CC; --turq:#00C3C8; --pink:#F3A1C6; --yellow:#FFFF82;
+  --grey:#DEDEDE; --lgrey:#f5f5f2; --white:#fff;
+  --blue-dark:#004fa0; --turq-dark:#008a8d;
+  --serif:Georgia,serif; --sans:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--lgrey); font-family:var(--sans); color:#1a2a40; }
+
+/* ── COVER ── */
+.cover {
+  background:var(--blue);
+  padding:36px 60px 32px;
+  position:relative; overflow:hidden;
+  display:flex; align-items:flex-end; justify-content:space-between;
+}
+.cover-left { position:relative; z-index:2; }
+.cover-grad { position:absolute; top:0; right:0; width:35%; height:100%; background:linear-gradient(135deg,var(--turq),var(--pink),var(--yellow)); opacity:.9; }
+.cover-grid-bg {
+  position:absolute; top:0; right:0; width:35%; height:100%;
+  background-image:linear-gradient(rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px);
+  background-size:36px 36px;
+}
+.logo { font-family:var(--serif); font-size:22px; color:#fff; margin-bottom:12px; }
+.logo span { font-family:var(--sans); font-weight:300; }
+.cover-tag { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:5px; }
+.cover-title { font-family:var(--serif); font-size:28px; color:#fff; line-height:1.2; max-width:520px; }
+.cover-sub { font-size:12px; color:rgba(255,255,255,.7); margin-top:8px; font-weight:300; max-width:500px; line-height:1.5; }
+.cover-pills { display:flex; gap:7px; margin-top:14px; flex-wrap:wrap; }
+.cover-pill { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); padding:2px 10px; border-radius:100px; font-size:10px; color:rgba(255,255,255,.8); font-family:var(--mono); }
+.cover-right { position:relative; z-index:2; text-align:right; }
+.cover-version { font-family:var(--mono); font-size:10px; color:rgba(255,255,255,.4); }
+
+/* ── PAGE ── */
+.page { max-width:1400px; margin:0 auto; padding:32px 40px 60px; }
+
+/* ── LEGEND ── */
+.legend {
+  display:flex; gap:20px; flex-wrap:wrap;
+  background:var(--white); border:1px solid #d0dcea; border-radius:8px;
+  padding:12px 18px; margin-bottom:24px;
+  box-shadow:0 1px 4px rgba(0,102,204,.06);
+}
+.legend-item { display:flex; align-items:center; gap:7px; font-size:11px; color:#4a6080; }
+.legend-dot { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+
+/* ── DIAGRAM WRAPPER ── */
+.diagram { width:100%; overflow-x:auto; }
+.diagram svg { display:block; min-width:1200px; }
+
+/* ── LAYER LABELS ── */
+.layer-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:1.5px;
+  text-transform:uppercase; fill:#8898aa;
+}
+
+/* ── FOOTER ── */
+.foot {
+  background:var(--blue); padding:22px 60px;
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:40px;
+}
+.foot-logo { font-family:var(--serif); font-size:18px; color:#fff; }
+.foot-logo span { font-family:var(--sans); font-weight:300; }
+.foot-note { font-size:10px; color:rgba(255,255,255,.4); text-align:right; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-grad"></div>
+  <div class="cover-grid-bg"></div>
+  <div class="cover-left">
+    <div class="logo">Plan<span>Flow</span></div>
+    <div class="cover-tag">Finext Digital Finance — Technische Architectuur</div>
+    <h1 class="cover-title">PlanFlow — Volledige Systeem Architectuur</h1>
+    <p class="cover-sub">End-to-end overzicht van alle technische componenten, integraties, datastromen en beveiligingslagen voor de productie deployment van PlanFlow.</p>
+    <div class="cover-pills">
+      <span class="cover-pill">AWS ECS Fargate</span>
+      <span class="cover-pill">PostgreSQL RDS</span>
+      <span class="cover-pill">Oracle Fusion REST</span>
+      <span class="cover-pill">Azure AD SAML 2.0</span>
+      <span class="cover-pill">Node.js Backend</span>
+      <span class="cover-pill">GitHub Actions CI/CD</span>
+      <span class="cover-pill">Flyway Migrations</span>
+      <span class="cover-pill">Blue-Green Deploy</span>
+    </div>
+  </div>
+  <div class="cover-right">
+    <div class="cover-version">v1.0 · maart 2026<br>eu-west-1 · Ireland</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#0066CC"></div>PlanFlow / AWS componenten</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00C3C8"></div>Integratie / Middleware</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F3A1C6"></div>Externe klant systemen</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFFF82;border:1px solid #ccc"></div>Beveiliging / Compliance</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#DEDEDE;border:1px solid #bbb"></div>Data opslag</div>
+    <div class="legend-item" style="margin-left:auto">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#0066CC" stroke-width="1.5" stroke-dasharray="4,2"/></svg>
+      <span>Data flow (sync)</span>
+    </div>
+    <div class="legend-item">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#F3A1C6" stroke-width="1.5"/></svg>
+      <span>Auth flow</span>
+    </div>
+    <div class="legend-item">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#00C3C8" stroke-width="2"/></svg>
+      <span>API call</span>
+    </div>
+  </div>
+
+  <!-- THE DIAGRAM -->
+  <div class="diagram">
+<svg viewBox="0 0 1320 1080" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'DM Sans',sans-serif">
+<defs>
+  <!-- Finext gradient - header bars -->
+  <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#0066CC"/>
+    <stop offset="100%" stop-color="#0088ee"/>
+  </linearGradient>
+  <linearGradient id="gTurq" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#00C3C8"/>
+    <stop offset="100%" stop-color="#00a8ad"/>
+  </linearGradient>
+  <linearGradient id="gPink" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#e0709a"/>
+    <stop offset="100%" stop-color="#F3A1C6"/>
+  </linearGradient>
+  <linearGradient id="gYellow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#cccc00"/>
+    <stop offset="100%" stop-color="#FFFF82"/>
+  </linearGradient>
+  <linearGradient id="gGrey" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#bbb"/>
+    <stop offset="100%" stop-color="#DEDEDE"/>
+  </linearGradient>
+  <!-- Background gradient for whole diagram -->
+  <linearGradient id="gBg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#f8f8f5"/>
+    <stop offset="100%" stop-color="#f0f0ec"/>
+  </linearGradient>
+  <!-- Arrow markers -->
+  <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#0066CC"/>
+  </marker>
+  <marker id="arrowTurq" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#00C3C8"/>
+  </marker>
+  <marker id="arrowPink" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#e0709a"/>
+  </marker>
+  <marker id="arrowGrey" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+  </marker>
+  <marker id="arrowBlueBi" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto-start-reverse">
+    <path d="M0,3 L8,0 L8,6 z" fill="#0066CC"/>
+  </marker>
+  <!-- Drop shadow filter -->
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0066CC" flood-opacity="0.10"/>
+  </filter>
+  <filter id="shadowLight" x="-5%" y="-5%" width="110%" height="115%">
+    <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.06"/>
+  </filter>
+</defs>
+
+<!-- ═══════════════════════════════════════════════════════
+     BACKGROUND
+═══════════════════════════════════════════════════════ -->
+<rect width="1320" height="1080" fill="url(#gBg)"/>
+
+<!-- Finext growing grid decoration (top right) -->
+<g opacity="0.04">
+  <line x1="900" y1="0" x2="900" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="940" y1="0" x2="940" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="980" y1="0" x2="980" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1020" y1="0" x2="1020" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1060" y1="0" x2="1060" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1100" y1="0" x2="1100" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1140" y1="0" x2="1140" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1180" y1="0" x2="1180" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1220" y1="0" x2="1220" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1260" y1="0" x2="1260" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="1300" y1="0" x2="1300" y2="200" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="0" x2="1320" y2="0" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="40" x2="1320" y2="40" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="80" x2="1320" y2="80" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="120" x2="1320" y2="120" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="160" x2="1320" y2="160" stroke="#0066CC" stroke-width="1"/>
+  <line x1="880" y1="200" x2="1320" y2="200" stroke="#0066CC" stroke-width="1"/>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER BACKGROUND BANDS
+═══════════════════════════════════════════════════════ -->
+<!-- Layer 1: Users (y=28-108) -->
+<rect x="20" y="28" width="1280" height="88" rx="8" fill="#eef4ff" opacity="0.5"/>
+<!-- Layer 2: Security/Access (y=134-194) -->
+<rect x="20" y="134" width="1280" height="68" rx="8" fill="rgba(255,255,130,0.08)"/>
+<!-- Layer 3: Frontend/CDN (y=220-290) -->
+<rect x="20" y="220" width="1280" height="78" rx="8" fill="rgba(0,195,200,.05)"/>
+<!-- Layer 4: App Layer (y=316-486) -->
+<rect x="20" y="316" width="1280" height="178" rx="8" fill="rgba(0,102,204,.04)"/>
+<!-- Layer 5: Data (y=512-612) -->
+<rect x="20" y="512" width="1280" height="108" rx="8" fill="rgba(100,100,100,.04)"/>
+<!-- Layer 6: Integration (y=638-718) -->
+<rect x="20" y="638" width="1280" height="88" rx="8" fill="rgba(0,195,200,.04)"/>
+<!-- Layer 7: External (y=744-844) -->
+<rect x="20" y="744" width="1280" height="108" rx="8" fill="rgba(243,161,198,.06)"/>
+<!-- Layer 8: CI/CD (y=870-960) -->
+<rect x="20" y="870" width="1280" height="98" rx="8" fill="rgba(100,100,100,.03)"/>
+
+<!-- LAYER LABELS (left side) -->
+<text x="28" y="44" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">GEBRUIKERS</text>
+<text x="28" y="150" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">SECURITY</text>
+<text x="28" y="236" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">FRONTEND</text>
+<text x="28" y="332" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">APPLICATIE</text>
+<text x="28" y="528" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">DATA</text>
+<text x="28" y="654" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">INTEGRATIE</text>
+<text x="28" y="760" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">EXTERN</text>
+<text x="28" y="886" class="layer-label" font-family="'DM Mono',monospace" font-size="9" fill="#8898aa" letter-spacing="1.5" text-anchor="start">CI/CD</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 1 — GEBRUIKERS
+═══════════════════════════════════════════════════════ -->
+<!-- Supply Planner -->
+<g filter="url(#shadowLight)">
+  <rect x="120" y="42" width="140" height="64" rx="7" fill="white" stroke="#c8d8e8" stroke-width="1"/>
+  <rect x="120" y="42" width="140" height="18" rx="7" fill="url(#gBlue)"/>
+  <rect x="120" y="52" width="140" height="8" fill="url(#gBlue)"/>
+  <text x="190" y="55" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">SUPPLY PLANNER</text>
+  <text x="190" y="76" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">👤 Planner</text>
+  <text x="190" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">AD: PLANFLOW_PLANNER</text>
+</g>
+
+<!-- S&OP Manager -->
+<g filter="url(#shadowLight)">
+  <rect x="290" y="42" width="140" height="64" rx="7" fill="white" stroke="#c8d8e8" stroke-width="1"/>
+  <rect x="290" y="42" width="140" height="18" rx="7" fill="url(#gBlue)"/>
+  <rect x="290" y="52" width="140" height="8" fill="url(#gBlue)"/>
+  <text x="360" y="55" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">S&amp;OP MANAGER</text>
+  <text x="360" y="76" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">👤 Approver</text>
+  <text x="360" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">AD: PLANFLOW_APPROVER</text>
+</g>
+
+<!-- Finance Controller -->
+<g filter="url(#shadowLight)">
+  <rect x="460" y="42" width="140" height="64" rx="7" fill="white" stroke="#c8d8e8" stroke-width="1"/>
+  <rect x="460" y="42" width="140" height="18" rx="7" fill="url(#gBlue)"/>
+  <rect x="460" y="52" width="140" height="8" fill="url(#gBlue)"/>
+  <text x="530" y="55" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">CONTROLLER</text>
+  <text x="530" y="76" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">👤 Readonly</text>
+  <text x="530" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">AD: PLANFLOW_READONLY</text>
+</g>
+
+<!-- Inkoper -->
+<g filter="url(#shadowLight)">
+  <rect x="630" y="42" width="140" height="64" rx="7" fill="white" stroke="#c8d8e8" stroke-width="1"/>
+  <rect x="630" y="42" width="140" height="18" rx="7" fill="url(#gBlue)"/>
+  <rect x="630" y="52" width="140" height="8" fill="url(#gBlue)"/>
+  <text x="700" y="55" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">INKOPER</text>
+  <text x="700" y="76" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">👤 Approver</text>
+  <text x="700" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">AD: PLANFLOW_APPROVER</text>
+</g>
+
+<!-- Admin -->
+<g filter="url(#shadowLight)">
+  <rect x="800" y="42" width="140" height="64" rx="7" fill="white" stroke="#c8d8e8" stroke-width="1"/>
+  <rect x="800" y="42" width="140" height="18" rx="7" fill="url(#gBlue)"/>
+  <rect x="800" y="52" width="140" height="8" fill="url(#gBlue)"/>
+  <text x="870" y="55" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">ADMIN</text>
+  <text x="870" y="76" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">👤 Admin</text>
+  <text x="870" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">AD: PLANFLOW_ADMIN</text>
+</g>
+
+<!-- Browser note -->
+<rect x="980" y="50" width="180" height="48" rx="6" fill="white" stroke="#e0e8f0" stroke-width="1"/>
+<text x="1070" y="67" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">Browser / Web App</text>
+<text x="1070" y="81" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">HTTPS · TLS 1.3</text>
+<text x="1070" y="93" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Chrome · Edge · Safari</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 2 — SECURITY / ACCESS CONTROL
+═══════════════════════════════════════════════════════ -->
+<!-- Azure AD SSO -->
+<g filter="url(#shadowLight)">
+  <rect x="120" y="144" width="200" height="48" rx="7" fill="white" stroke="#ffdd88" stroke-width="1.5"/>
+  <rect x="120" y="144" width="200" height="16" rx="7" fill="url(#gYellow)"/>
+  <rect x="120" y="152" width="200" height="8" fill="url(#gYellow)"/>
+  <text x="220" y="158" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#555500" font-weight="500">AZURE ACTIVE DIRECTORY</text>
+  <text x="220" y="174" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444400" font-weight="500">SSO · SAML 2.0 · OIDC</text>
+  <text x="220" y="184" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#888800">MFA · Conditional Access · RBAC</text>
+</g>
+
+<!-- WAF + CloudFront -->
+<g filter="url(#shadowLight)">
+  <rect x="360" y="144" width="200" height="48" rx="7" fill="white" stroke="#ffdd88" stroke-width="1.5"/>
+  <rect x="360" y="144" width="200" height="16" rx="7" fill="url(#gYellow)"/>
+  <rect x="360" y="152" width="200" height="8" fill="url(#gYellow)"/>
+  <text x="460" y="158" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#555500" font-weight="500">AWS WAF + CLOUDFRONT</text>
+  <text x="460" y="174" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444400" font-weight="500">DDoS · Rate Limiting</text>
+  <text x="460" y="184" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#888800">HTTPS only · SSL/TLS termination</text>
+</g>
+
+<!-- Secrets Manager -->
+<g filter="url(#shadowLight)">
+  <rect x="600" y="144" width="200" height="48" rx="7" fill="white" stroke="#ffdd88" stroke-width="1.5"/>
+  <rect x="600" y="144" width="200" height="16" rx="7" fill="url(#gYellow)"/>
+  <rect x="600" y="152" width="200" height="8" fill="url(#gYellow)"/>
+  <text x="700" y="158" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#555500" font-weight="500">AWS SECRETS MANAGER</text>
+  <text x="700" y="174" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444400" font-weight="500">Credential Vault</text>
+  <text x="700" y="184" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#888800">DB · Fusion OAuth2 · AD Client</text>
+</g>
+
+<!-- IAM Roles -->
+<g filter="url(#shadowLight)">
+  <rect x="840" y="144" width="200" height="48" rx="7" fill="white" stroke="#ffdd88" stroke-width="1.5"/>
+  <rect x="840" y="144" width="200" height="16" rx="7" fill="url(#gYellow)"/>
+  <rect x="840" y="152" width="200" height="8" fill="url(#gYellow)"/>
+  <text x="940" y="158" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#555500" font-weight="500">AWS IAM ROLES</text>
+  <text x="940" y="174" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444400" font-weight="500">Task Execution Roles</text>
+  <text x="940" y="184" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#888800">ECS → RDS · Secrets · S3 · ECR</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 3 — FRONTEND / CDN / ALB
+═══════════════════════════════════════════════════════ -->
+<!-- ALB -->
+<g filter="url(#shadow)">
+  <rect x="200" y="232" width="260" height="56" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1.5"/>
+  <rect x="200" y="232" width="260" height="18" rx="8" fill="url(#gBlue)"/>
+  <rect x="200" y="242" width="260" height="8" fill="url(#gBlue)"/>
+  <text x="330" y="247" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="600">APPLICATION LOAD BALANCER</text>
+  <text x="330" y="265" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">AWS ALB · eu-west-1</text>
+  <text x="330" y="279" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Blue-green routing · health checks · SSL</text>
+</g>
+
+<!-- Static Frontend -->
+<g filter="url(#shadowLight)">
+  <rect x="520" y="232" width="220" height="56" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1"/>
+  <rect x="520" y="232" width="220" height="18" rx="8" fill="url(#gBlue)"/>
+  <rect x="520" y="242" width="220" height="8" fill="url(#gBlue)"/>
+  <text x="630" y="247" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">STATIC FRONTEND</text>
+  <text x="630" y="265" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">HTML/CSS/JS · Chart.js</text>
+  <text x="630" y="279" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">planflow_finext.html · Finext branding</text>
+</g>
+
+<!-- Route53 -->
+<g filter="url(#shadowLight)">
+  <rect x="800" y="232" width="180" height="56" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1"/>
+  <rect x="800" y="232" width="180" height="18" rx="8" fill="url(#gBlue)"/>
+  <rect x="800" y="242" width="180" height="8" fill="url(#gBlue)"/>
+  <text x="890" y="247" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">AWS ROUTE 53</text>
+  <text x="890" y="265" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="500">DNS · planflow.nl</text>
+  <text x="890" y="279" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">SSL via ACM · HTTPS redirect</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 4 — APPLICATION (ECS Fargate)
+═══════════════════════════════════════════════════════ -->
+<!-- AWS ECS CLUSTER border -->
+<rect x="80" y="322" width="1160" height="168" rx="10" fill="none" stroke="#0066CC" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.4"/>
+<text x="110" y="338" font-size="9" font-family="'DM Mono',monospace" fill="#0066CC" opacity="0.7" letter-spacing="1" font-weight="500">AWS ECS FARGATE CLUSTER — eu-west-1</text>
+
+<!-- BLUE container -->
+<g filter="url(#shadow)">
+  <rect x="110" y="346" width="250" height="128" rx="8" fill="white" stroke="#0066CC" stroke-width="2"/>
+  <rect x="110" y="346" width="250" height="20" rx="8" fill="url(#gBlue)"/>
+  <rect x="110" y="358" width="250" height="8" fill="url(#gBlue)"/>
+  <!-- BLUE badge -->
+  <rect x="295" y="350" width="58" height="16" rx="8" fill="#0066CC"/>
+  <text x="324" y="361" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#FFFF82" font-weight="700">● BLUE</text>
+  <text x="235" y="362" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">NODE.JS BACKEND</text>
+  <!-- tech stack inside -->
+  <text x="235" y="382" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="600">🟦 PlanFlow v1.x (LIVE)</text>
+  <text x="235" y="396" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Node.js 20 LTS · Express 4.18</text>
+  <text x="235" y="409" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">passport-azure-ad · oracledb 6.4</text>
+  <text x="235" y="422" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">helmet · rate-limit · winston</text>
+  <text x="235" y="436" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">1 vCPU · 2GB · port 3000</text>
+  <text x="235" y="450" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">/health · /api/forecasts · /api/pos</text>
+  <text x="235" y="462" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">JWT auth · RBAC middleware</text>
+</g>
+
+<!-- GREEN container -->
+<g filter="url(#shadowLight)">
+  <rect x="390" y="346" width="250" height="128" rx="8" fill="white" stroke="#00C3C8" stroke-width="2" stroke-dasharray="5,3"/>
+  <rect x="390" y="346" width="250" height="20" rx="8" fill="url(#gTurq)"/>
+  <rect x="390" y="358" width="250" height="8" fill="url(#gTurq)"/>
+  <!-- GREEN badge -->
+  <rect x="575" y="350" width="60" height="16" rx="8" fill="#00C3C8"/>
+  <text x="605" y="361" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="700">● GREEN</text>
+  <text x="515" y="362" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">NODE.JS BACKEND</text>
+  <text x="515" y="382" text-anchor="middle" font-size="11" font-family="'DM Sans',sans-serif" fill="#00838a" font-weight="600">🟩 PlanFlow v1.x+1 (STANDBY)</text>
+  <text x="515" y="396" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Nieuwe versie · wacht op health check</text>
+  <text x="515" y="409" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Flyway migraties al gedraaid</text>
+  <text x="515" y="422" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">ALB target group: planflow-green</text>
+  <text x="515" y="436" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Cutover: 30 sec na ✓ health check</text>
+  <text x="515" y="450" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Rollback: ALB target → BLUE (60s)</text>
+</g>
+
+<!-- Forecast Engine -->
+<g filter="url(#shadowLight)">
+  <rect x="670" y="346" width="220" height="128" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1"/>
+  <rect x="670" y="346" width="220" height="20" rx="8" fill="url(#gBlue)"/>
+  <rect x="670" y="358" width="220" height="8" fill="url(#gBlue)"/>
+  <text x="780" y="362" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">FORECAST ENGINE</text>
+  <text x="780" y="380" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="600">Python 3.11 · statsmodels</text>
+  <text x="780" y="394" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">ETS Holt-Winters</text>
+  <text x="780" y="407" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">ARIMA / SARIMA (auto)</text>
+  <text x="780" y="420" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Prophet (Meta)</text>
+  <text x="780" y="433" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Ensemble best-pick</text>
+  <text x="780" y="446" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Cron job · AWS Lambda trigger</text>
+  <text x="780" y="459" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">406 SKUs · maandelijks</text>
+  <text x="780" y="472" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Safety stock 98% service level</text>
+</g>
+
+<!-- CloudWatch -->
+<g filter="url(#shadowLight)">
+  <rect x="920" y="346" width="200" height="128" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1"/>
+  <rect x="920" y="346" width="200" height="20" rx="8" fill="url(#gBlue)"/>
+  <rect x="920" y="358" width="200" height="8" fill="url(#gBlue)"/>
+  <text x="1020" y="362" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">MONITORING</text>
+  <text x="1020" y="380" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="600">AWS CloudWatch</text>
+  <text x="1020" y="394" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Logs: app · nginx · db</text>
+  <text x="1020" y="407" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Metrics: CPU · mem · latency</text>
+  <text x="1020" y="420" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Alarms: /health · error rate</text>
+  <text x="1020" y="433" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">UptimeRobot heartbeat</text>
+  <text x="1020" y="446" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Retention: 90 dagen</text>
+  <text x="1020" y="459" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Alert → Email / Teams</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 5 — DATA
+═══════════════════════════════════════════════════════ -->
+<!-- RDS PostgreSQL -->
+<g filter="url(#shadow)">
+  <rect x="110" y="524" width="260" height="84" rx="8" fill="white" stroke="#b3d0ff" stroke-width="1.5"/>
+  <rect x="110" y="524" width="260" height="20" rx="8" fill="url(#gGrey)"/>
+  <rect x="110" y="534" width="260" height="10" fill="url(#gGrey)"/>
+  <text x="240" y="540" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#333" font-weight="600">AWS RDS POSTGRESQL</text>
+  <text x="240" y="558" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#0066CC" font-weight="600">db.m6g.large · Multi-AZ</text>
+  <text x="240" y="571" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Schema: PLANFLOW · TDE encryptie</text>
+  <text x="240" y="584" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">USERS · ITEMS · DEMAND_FORECAST</text>
+  <text x="240" y="597" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">PURCHASE_ORDERS · AUDIT_LOG</text>
+</g>
+
+<!-- RDS Replica -->
+<g filter="url(#shadowLight)">
+  <rect x="400" y="524" width="200" height="84" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <rect x="400" y="524" width="200" height="20" rx="8" fill="url(#gGrey)"/>
+  <rect x="400" y="534" width="200" height="10" fill="url(#gGrey)"/>
+  <text x="500" y="540" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#333" font-weight="500">RDS STANDBY (Multi-AZ)</text>
+  <text x="500" y="558" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#888" font-weight="500">Automatische failover</text>
+  <text x="500" y="571" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Sub-minuut failover bij storing</text>
+  <text x="500" y="584" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Sync replicatie · zelfde AZ</text>
+  <text x="500" y="597" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">35 dagen point-in-time recovery</text>
+</g>
+
+<!-- S3 -->
+<g filter="url(#shadowLight)">
+  <rect x="632" y="524" width="180" height="84" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="632" y="524" width="180" height="20" rx="8" fill="url(#gGrey)"/>
+  <rect x="632" y="534" width="180" height="10" fill="url(#gGrey)"/>
+  <text x="722" y="540" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#333" font-weight="500">AWS S3</text>
+  <text x="722" y="558" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#555" font-weight="500">Opslag</text>
+  <text x="722" y="571" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">DB snapshots · exports</text>
+  <text x="722" y="584" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Rapportages · uploads</text>
+  <text x="722" y="597" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Versleuteld · versioning aan</text>
+</g>
+
+<!-- ECR -->
+<g filter="url(#shadowLight)">
+  <rect x="840" y="524" width="180" height="84" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="840" y="524" width="180" height="20" rx="8" fill="url(#gGrey)"/>
+  <rect x="840" y="534" width="180" height="10" fill="url(#gGrey)"/>
+  <text x="930" y="540" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#333" font-weight="500">AWS ECR</text>
+  <text x="930" y="558" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#555" font-weight="500">Container Registry</text>
+  <text x="930" y="571" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Docker images</text>
+  <text x="930" y="584" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">planflow-app:sha-xxx</text>
+  <text x="930" y="597" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Vulnerability scanning</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 6 — INTEGRATION / MIDDLEWARE
+═══════════════════════════════════════════════════════ -->
+<!-- Oracle Fusion Client -->
+<g filter="url(#shadow)">
+  <rect x="110" y="650" width="260" height="64" rx="8" fill="white" stroke="#88e0e2" stroke-width="1.5"/>
+  <rect x="110" y="650" width="260" height="18" rx="8" fill="url(#gTurq)"/>
+  <rect x="110" y="660" width="260" height="8" fill="url(#gTurq)"/>
+  <text x="240" y="664" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="600">ORACLE FUSION CLIENT</text>
+  <text x="240" y="681" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#007780" font-weight="600">fusion-client.js · axios</text>
+  <text x="240" y="693" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">OAuth2 token cache · retry logic</text>
+  <text x="240" y="705" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">REST-Framework-Version: 4</text>
+</g>
+
+<!-- Sync Scheduler -->
+<g filter="url(#shadowLight)">
+  <rect x="410" y="650" width="220" height="64" rx="8" fill="white" stroke="#88e0e2" stroke-width="1"/>
+  <rect x="410" y="650" width="220" height="18" rx="8" fill="url(#gTurq)"/>
+  <rect x="410" y="660" width="220" height="8" fill="url(#gTurq)"/>
+  <text x="520" y="664" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">SYNC SCHEDULER</text>
+  <text x="520" y="681" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#007780" font-weight="500">node-cron · AWS EventBridge</text>
+  <text x="520" y="693" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Items: dagelijks 02:00 CET</text>
+  <text x="520" y="705" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Inventory: elk uur · POs: realtime</text>
+</g>
+
+<!-- Audit Service -->
+<g filter="url(#shadowLight)">
+  <rect x="670" y="650" width="220" height="64" rx="8" fill="white" stroke="#88e0e2" stroke-width="1"/>
+  <rect x="670" y="650" width="220" height="18" rx="8" fill="url(#gTurq)"/>
+  <rect x="670" y="660" width="220" height="8" fill="url(#gTurq)"/>
+  <text x="780" y="664" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">AUDIT SERVICE</text>
+  <text x="780" y="681" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#007780" font-weight="500">INSERT-only logging</text>
+  <text x="780" y="693" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">AUDIT_LOG tabel · IP · sessie</text>
+  <text x="780" y="705" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">FORECAST_UPDATE · PO_APPROVE</text>
+</g>
+
+<!-- Feature Flags -->
+<g filter="url(#shadowLight)">
+  <rect x="930" y="650" width="200" height="64" rx="8" fill="white" stroke="#88e0e2" stroke-width="1"/>
+  <rect x="930" y="650" width="200" height="18" rx="8" fill="url(#gTurq)"/>
+  <rect x="930" y="660" width="200" height="8" fill="url(#gTurq)"/>
+  <text x="1030" y="664" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">FEATURE FLAGS</text>
+  <text x="1030" y="681" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#007780" font-weight="500">Per AD-groep aan/uit</text>
+  <text x="1030" y="693" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Scenario planning · S&OP calendar</text>
+  <text x="1030" y="705" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#4a6080">Zero-deploy feature rollout</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 7 — EXTERNAL SYSTEMS
+═══════════════════════════════════════════════════════ -->
+<!-- Oracle Fusion Cloud -->
+<g filter="url(#shadow)">
+  <rect x="110" y="756" width="280" height="84" rx="8" fill="white" stroke="#f3a1c6" stroke-width="1.5"/>
+  <rect x="110" y="756" width="280" height="20" rx="8" fill="url(#gPink)"/>
+  <rect x="110" y="768" width="280" height="8" fill="url(#gPink)"/>
+  <text x="250" y="772" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="600">ORACLE FUSION CLOUD (ERP)</text>
+  <text x="250" y="792" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#a0306a" font-weight="600">Klant ERP · REST API v11.13.18</text>
+  <text x="250" y="806" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">SCM · Procurement · Financials</text>
+  <text x="250" y="819" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">/inventoryBalances · /purchaseOrders</text>
+  <text x="250" y="832" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">/items · /salesOrders · /approvedSupplierLists</text>
+</g>
+
+<!-- Azure AD -->
+<g filter="url(#shadowLight)">
+  <rect x="430" y="756" width="230" height="84" rx="8" fill="white" stroke="#f3a1c6" stroke-width="1.5"/>
+  <rect x="430" y="756" width="230" height="20" rx="8" fill="url(#gPink)"/>
+  <rect x="430" y="768" width="230" height="8" fill="url(#gPink)"/>
+  <text x="545" y="772" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="600">AZURE ACTIVE DIRECTORY</text>
+  <text x="545" y="792" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#a0306a" font-weight="600">Klant Microsoft 365</text>
+  <text x="545" y="806" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">Tenant ID · Client ID · Groups</text>
+  <text x="545" y="819" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">PLANFLOW_ADMIN/APPROVER</text>
+  <text x="545" y="832" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">PLANNER/READONLY</text>
+</g>
+
+<!-- Oracle IDCS -->
+<g filter="url(#shadowLight)">
+  <rect x="700" y="756" width="230" height="84" rx="8" fill="white" stroke="#f3a1c6" stroke-width="1"/>
+  <rect x="700" y="756" width="230" height="20" rx="8" fill="url(#gPink)"/>
+  <rect x="700" y="768" width="230" height="8" fill="url(#gPink)"/>
+  <text x="815" y="772" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="white" font-weight="500">ORACLE IDCS</text>
+  <text x="815" y="792" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#a0306a" font-weight="500">OAuth2 Token Server</text>
+  <text x="815" y="806" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">client_credentials grant</text>
+  <text x="815" y="819" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">Bearer token · 3600s expiry</text>
+  <text x="815" y="832" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#6a4050">Auto-refresh voor sync jobs</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     LAYER 8 — CI/CD
+═══════════════════════════════════════════════════════ -->
+<!-- GitHub -->
+<g filter="url(#shadowLight)">
+  <rect x="110" y="882" width="180" height="76" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="110" y="882" width="180" height="18" rx="8" fill="url(#gGrey)"/>
+  <rect x="110" y="892" width="180" height="8" fill="url(#gGrey)"/>
+  <text x="200" y="897" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#444" font-weight="500">GITHUB REPOSITORY</text>
+  <text x="200" y="914" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444" font-weight="500">finext/planflow</text>
+  <text x="200" y="927" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">main branch → trigger deploy</text>
+  <text x="200" y="940" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">src/ · db/migrations/ · Dockerfile</text>
+  <text x="200" y="953" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">.github/workflows/deploy.yml</text>
+</g>
+
+<!-- GitHub Actions -->
+<g filter="url(#shadowLight)">
+  <rect x="320" y="882" width="200" height="76" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="320" y="882" width="200" height="18" rx="8" fill="url(#gGrey)"/>
+  <rect x="320" y="892" width="200" height="8" fill="url(#gGrey)"/>
+  <text x="420" y="897" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#444" font-weight="500">GITHUB ACTIONS</text>
+  <text x="420" y="914" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444" font-weight="500">CI/CD Pipeline</text>
+  <text x="420" y="927" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">test → build → migrate → deploy</text>
+  <text x="420" y="940" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">npm test · docker build · ECR push</text>
+  <text x="420" y="953" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">ECS rolling deploy · health check</text>
+</g>
+
+<!-- Flyway -->
+<g filter="url(#shadowLight)">
+  <rect x="550" y="882" width="200" height="76" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="550" y="882" width="200" height="18" rx="8" fill="url(#gGrey)"/>
+  <rect x="550" y="892" width="200" height="8" fill="url(#gGrey)"/>
+  <text x="650" y="897" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#444" font-weight="500">FLYWAY MIGRATIONS</text>
+  <text x="650" y="914" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444" font-weight="500">DB Schema Versioning</text>
+  <text x="650" y="927" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">V1__init · V2__scenarios</text>
+  <text x="650" y="940" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Forward-only · backward compat</text>
+  <text x="650" y="953" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Runs BEFORE new app deploy</text>
+</g>
+
+<!-- Staging env -->
+<g filter="url(#shadowLight)">
+  <rect x="780" y="882" width="200" height="76" rx="8" fill="white" stroke="#DEDEDE" stroke-width="1"/>
+  <rect x="780" y="882" width="200" height="18" rx="8" fill="url(#gGrey)"/>
+  <rect x="780" y="892" width="200" height="8" fill="url(#gGrey)"/>
+  <text x="880" y="897" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#444" font-weight="500">STAGING ENVIRONMENT</text>
+  <text x="880" y="914" text-anchor="middle" font-size="10" font-family="'DM Sans',sans-serif" fill="#444" font-weight="500">Test voor productie</text>
+  <text x="880" y="927" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">staging.planflow.nl</text>
+  <text x="880" y="940" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Zelfde stack · kleinere DB</text>
+  <text x="880" y="953" text-anchor="middle" font-size="9" font-family="'DM Mono',monospace" fill="#8898aa">Auto-deploy op PR merge</text>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONNECTIONS / ARROWS
+═══════════════════════════════════════════════════════ -->
+
+<!-- Users → Security (Auth flow, pink) -->
+<line x1="190" y1="106" x2="220" y2="144" stroke="#e0709a" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+<line x1="360" y1="106" x2="460" y2="144" stroke="#e0709a" stroke-width="1.5" marker-end="url(#arrowPink)"/>
+<line x1="530" y1="106" x2="700" y2="144" stroke="#e0709a" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowPink)"/>
+
+<!-- Security → ALB (blue) -->
+<line x1="460" y1="192" x2="380" y2="232" stroke="#0066CC" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+<!-- ALB → BLUE container -->
+<line x1="330" y1="288" x2="270" y2="346" stroke="#0066CC" stroke-width="2" marker-end="url(#arrowBlue)"/>
+<!-- ALB → GREEN container (dashed) -->
+<line x1="380" y1="288" x2="450" y2="346" stroke="#00C3C8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowTurq)"/>
+
+<!-- BLUE → RDS (data) -->
+<line x1="235" y1="474" x2="235" y2="524" stroke="#0066CC" stroke-width="2" marker-end="url(#arrowBlue)" marker-start="url(#arrowBlueBi)"/>
+
+<!-- BLUE → Forecast Engine -->
+<line x1="360" y1="420" x2="670" y2="420" stroke="#00C3C8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowTurq)"/>
+
+<!-- BLUE → Fusion Client -->
+<line x1="200" y1="474" x2="200" y2="650" stroke="#00C3C8" stroke-width="1.5" marker-end="url(#arrowTurq)"/>
+
+<!-- Fusion Client → Oracle Fusion (API call) -->
+<line x1="240" y1="714" x2="240" y2="756" stroke="#00C3C8" stroke-width="2" marker-end="url(#arrowTurq)" marker-start="url(#arrowBlueBi)"/>
+
+<!-- Azure AD (external) → Azure AD SSO (security layer) bidirectional -->
+<line x1="545" y1="756" x2="280" y2="192" stroke="#e0709a" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrowPink)"/>
+
+<!-- Oracle IDCS → Fusion Client -->
+<line x1="815" y1="756" x2="330" y2="714" stroke="#e0709a" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrowPink)"/>
+
+<!-- RDS → Standby (sync) -->
+<line x1="370" y1="565" x2="400" y2="565" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowGrey)"/>
+
+<!-- BLUE → S3 -->
+<line x1="290" y1="490" x2="680" y2="540" stroke="#888" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrowGrey)"/>
+
+<!-- GitHub → GitHub Actions → Flyway → ECR → ECS -->
+<line x1="290" y1="920" x2="320" y2="920" stroke="#888" stroke-width="1.5" marker-end="url(#arrowGrey)"/>
+<line x1="520" y1="920" x2="550" y2="920" stroke="#888" stroke-width="1.5" marker-end="url(#arrowGrey)"/>
+<line x1="750" y1="920" x2="780" y2="920" stroke="#888" stroke-width="1.5" marker-end="url(#arrowGrey)"/>
+
+<!-- Flyway → RDS (migration) -->
+<line x1="650" y1="882" x2="350" y2="608" stroke="#888" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arrowGrey)"/>
+
+<!-- GitHub Actions → ECR → ECS -->
+<line x1="420" y1="882" x2="890" y2="608" stroke="#888" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrowGrey)"/>
+
+<!-- Secrets Manager → BLUE container -->
+<line x1="700" y1="192" x2="700" y2="290" stroke="#cccc00" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arrowGrey)" opacity="0.7"/>
+<line x1="700" y1="290" x2="360" y2="346" stroke="#cccc00" stroke-width="1" stroke-dasharray="3,2" opacity="0.7"/>
+
+<!-- Audit Service → RDS -->
+<line x1="780" y1="714" x2="500" y2="608" stroke="#00C3C8" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arrowTurq)"/>
+
+<!-- ═══════════════════════════════════════════════════════
+     FINEXT LOGO + TITLE (bottom)
+═══════════════════════════════════════════════════════ -->
+<rect x="20" y="988" width="1280" height="72" rx="8" fill="#0066CC"/>
+<rect x="20" y="988" width="420" height="72" rx="8" fill="#004fa0"/>
+<!-- Gradient strip -->
+<rect x="440" y="988" width="860" height="72" rx="8" fill="url(#gBlue)"/>
+
+<text x="50" y="1020" font-family="Georgia,serif" font-size="20" fill="white" font-weight="400">Plan</text>
+<text x="90" y="1020" font-family="'DM Sans',sans-serif" font-size="20" fill="white" font-weight="300">Flow</text>
+<text x="50" y="1040" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,255,255,.5)" letter-spacing="1.5">POWER TO THE FINANCIAL</text>
+
+<text x="1280" y="1015" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,255,255,.5)">Finext Digital Finance · Technische Architectuur v1.0</text>
+<text x="1280" y="1028" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,255,255,.5)">AWS eu-west-1 · Node.js · PostgreSQL · Oracle Fusion · Azure AD</text>
+<text x="1280" y="1041" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,255,255,.5)">ECS Fargate · Blue-Green · Flyway · GitHub Actions</text>
+<text x="1280" y="1054" text-anchor="end" font-family="'DM Mono',monospace" font-size="9" fill="rgba(255,255,255,.4)">maart 2026</text>
+
+</svg>
+  </div>
+
+</div>
+
+<div class="foot">
+  <div>
+    <div class="foot-logo">Plan<span>Flow</span></div>
+    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;letter-spacing:1px">POWER TO THE FINANCIAL</div>
+  </div>
+  <div class="foot-note">
+    Finext Digital Finance · Technische Architectuur<br>
+    AWS eu-west-1 · Node.js · PostgreSQL · Oracle Fusion · Azure AD · maart 2026
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\Ravi\\\\Documents\\\\AIApps\\\\parse_excel.ps1\" \"C:\\\\Users\\\\Ravi\\\\Documents\\\\AIApps\\\\Budget Files\\\\NL01_Budget2026_3100_SMU_v2.xlsx\" \"xl/worksheets/sheet8.xml\")",
+      "Bash(powershell.exe -Command \"Start-Process ''C:\\\\Users\\\\Ravi\\\\Documents\\\\AIApps\\\\opex_planning.html''\")",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npm run:*)",
+      "Bash(command -v node)",
+      "Bash(npm install:*)",
+      "Bash(npm --version)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(curl -s http://localhost:3000)"
+    ]
+  }
+}

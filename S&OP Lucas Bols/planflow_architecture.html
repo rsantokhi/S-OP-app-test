@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PlanFlow — Deployment Architectuur</title>
+<link href="https://fonts.googleapis.com/css2?family=Georgia&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#0066CC;--turq:#00C3C8;--pink:#F3A1C6;--yellow:#FFFF82;
+  --grey:#DEDEDE;--lgrey:#f5f5f2;--white:#fff;
+  --text:#0066CC;--text2:#4a6080;--text3:#8898aa;
+  --border:#e0e8f0;--border2:#c8d8e8;
+  --green:#007744;--green-bg:#eefff6;--green-border:#88ddbb;
+  --amber:#885500;--amber-bg:#fffbee;--amber-border:#ffdd88;
+  --red:#cc2200;--red-bg:#fff0ee;--red-border:#ffb8b0;
+  --serif:Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--lgrey);color:var(--text);font-family:var(--sans);font-size:13px}
+
+/* COVER */
+.cover{
+  background:var(--blue);min-height:260px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:40px 60px;position:relative;overflow:hidden;
+}
+.cover-gradient{
+  position:absolute;top:0;right:0;width:40%;height:100%;
+  background:linear-gradient(135deg,var(--turq),var(--pink),var(--yellow));
+  opacity:.85;
+}
+.cover-grid{
+  position:absolute;top:0;right:0;width:40%;height:100%;
+  background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.cover-logo{font-family:var(--serif);font-size:28px;color:#fff;position:relative;z-index:2;margin-bottom:20px}
+.cover-logo span{font-family:var(--sans);font-weight:300}
+.cover-tagline{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px;position:relative;z-index:2}
+.cover-title{font-family:var(--serif);font-size:36px;color:#fff;position:relative;z-index:2;line-height:1.15;max-width:55%}
+.cover-sub{font-size:14px;color:rgba(255,255,255,.7);position:relative;z-index:2;margin-top:10px;font-weight:300;max-width:55%}
+.cover-pills{display:flex;gap:8px;margin-top:20px;position:relative;z-index:2;flex-wrap:wrap}
+.cover-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 12px;border-radius:100px;font-size:11px;color:rgba(255,255,255,.85);font-family:var(--mono)}
+
+/* NAV */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:var(--white);border-bottom:2px solid var(--blue);
+  display:flex;padding:0 60px;
+  box-shadow:0 2px 8px rgba(0,102,204,.06);
+  overflow-x:auto;
+}
+.nav-item{padding:12px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.nav-item:hover{color:var(--blue)}
+.nav-item.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* LAYOUT */
+.doc{max-width:1080px;margin:0 auto;padding:48px 60px}
+.section{margin-bottom:52px}
+.section-num{font-family:var(--serif);font-size:52px;color:var(--grey);line-height:1;margin-bottom:-8px}
+.section-title{font-family:var(--serif);font-size:26px;color:var(--blue);margin-bottom:6px}
+.section-sub{font-size:13px;color:var(--text3);font-family:var(--mono);margin-bottom:24px}
+.divider{height:3px;background:linear-gradient(to right,var(--blue),var(--turq),transparent);border-radius:2px;margin-bottom:24px}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,102,204,.05)}
+.card-head{padding:12px 18px;border-bottom:1px solid var(--border);background:linear-gradient(to right,rgba(0,102,204,.04),transparent);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:12px;font-weight:600;color:var(--blue);letter-spacing:.3px}
+.card-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.card-body{padding:18px}
+
+/* CODE */
+.code-wrap{background:#0a1628;border-radius:8px;overflow:hidden;margin:12px 0}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#111d33;border-bottom:1px solid #1e2d4a}
+.code-filename{font-family:var(--mono);font-size:11px;color:#88aacc;letter-spacing:.5px}
+.code-lang{font-size:9px;font-family:var(--mono);color:#3a5070;text-transform:uppercase;letter-spacing:1px}
+.code-body{padding:18px;overflow-x:auto}
+.code-body pre{font-family:var(--mono);font-size:11px;line-height:1.75;color:#c8d8f0;white-space:pre}
+.c-comment{color:#3a5878}
+.c-key{color:#93c5fd}
+.c-str{color:#86efac}
+.c-val{color:#fca5a5}
+.c-head{color:#fcd34d;font-weight:500}
+.c-turq{color:#67e8f9}
+.c-pink{color:#f9a8d4}
+
+/* ARCH DIAGRAM */
+.arch{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:28px;margin-bottom:16px}
+.arch-row{margin-bottom:12px}
+.arch-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:var(--mono);margin-bottom:8px;font-weight:500}
+.arch-boxes{display:flex;gap:10px;flex-wrap:wrap}
+.arch-box{border-radius:8px;padding:11px 14px;border:1.5px solid transparent;flex:1;min-width:120px}
+.arch-box .abn{font-size:12px;font-weight:600;margin-bottom:3px}
+.arch-box .abs{font-size:10px;font-family:var(--mono);opacity:.75}
+.arch-box.blue{background:#eef4ff;border-color:#b3d0ff;color:#003d99}
+.arch-box.turq{background:#e0f8f8;border-color:#88e0e2;color:#00606a}
+.arch-box.green{background:var(--green-bg);border-color:var(--green-border);color:#004422}
+.arch-box.amber{background:var(--amber-bg);border-color:var(--amber-border);color:#553300}
+.arch-box.grey{background:var(--lgrey);border-color:var(--grey);color:#445566}
+.arch-box.red{background:var(--red-bg);border-color:var(--red-border);color:#881100}
+.arch-arrow{text-align:center;font-size:18px;color:var(--border2);padding:4px 0}
+
+/* DEPLOY FLOW */
+.flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:20px;background:var(--lgrey);border-radius:8px;border:1px solid var(--border)}
+.flow-step{background:var(--white);border:1.5px solid var(--border2);border-radius:7px;padding:10px 14px;min-width:110px;text-align:center;flex-shrink:0}
+.flow-step .fsn{font-size:11px;font-weight:600;color:var(--blue);margin-bottom:3px}
+.flow-step .fss{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.flow-arrow{color:var(--border2);font-size:18px;padding:0 6px;flex-shrink:0}
+.flow-step.active{border-color:var(--blue);background:#eef4ff}
+.flow-step.warn{border-color:var(--amber-border);background:var(--amber-bg)}
+.flow-step.ok{border-color:var(--green-border);background:var(--green-bg)}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-radius:7px;border:1px solid;font-size:12px;line-height:1.5}
+.check-item.ok{background:var(--green-bg);border-color:var(--green-border);color:#004422}
+.check-item.warn{background:var(--amber-bg);border-color:var(--amber-border);color:#553300}
+.check-item.info{background:#eef4ff;border-color:var(--border2);color:#003d99}
+.check-icon{flex-shrink:0;font-size:13px;margin-top:1px}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px 16px;border-top:3px solid var(--blue)}
+.stat.turq{border-top-color:var(--turq)}
+.stat.green{border-top-color:var(--green)}
+.stat.amber{border-top-color:var(--amber)}
+.stat-label{font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px}
+.stat-val{font-family:var(--serif);font-size:26px;color:var(--blue);line-height:1;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0}
+.tbl th{padding:8px 12px;background:linear-gradient(to bottom,rgba(0,102,204,.06),rgba(0,102,204,.02));border-bottom:2px solid var(--border2);font-size:10px;font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--text3);text-align:left}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2)}
+.tbl tr:hover td{background:rgba(0,102,204,.02)}
+.tbl td.blue{color:var(--blue);font-weight:500}
+.tbl td.green{color:var(--green)}
+.tbl td.amber{color:var(--amber)}
+.tbl td.mono{font-family:var(--mono);font-size:11px}
+
+/* CALLOUT */
+.callout{background:linear-gradient(135deg,var(--blue),#0088dd);color:#fff;border-radius:9px;padding:20px 24px;margin:16px 0;position:relative;overflow:hidden}
+.callout::after{content:'';position:absolute;top:0;right:0;width:35%;height:100%;background:linear-gradient(135deg,var(--turq),var(--pink));opacity:.25}
+.callout-title{font-family:var(--serif);font-size:17px;margin-bottom:7px;position:relative;z-index:1}
+.callout-body{font-size:13px;opacity:.9;line-height:1.6;position:relative;z-index:1}
+.callout-hl{background:var(--yellow);color:var(--blue);padding:1px 7px;border-radius:3px;font-weight:700;font-size:12px}
+
+/* FOOTER */
+.footer{background:var(--blue);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;margin-top:60px}
+.footer-logo{font-family:var(--serif);font-size:20px;color:#fff}
+.footer-logo span{font-family:var(--sans);font-weight:300}
+.footer-right{font-size:11px;color:rgba(255,255,255,.5);text-align:right}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-gradient"></div>
+  <div class="cover-grid"></div>
+  <div class="cover-logo">Plan<span>Flow</span></div>
+  <div class="cover-tagline">Finext Digital Finance</div>
+  <h1 class="cover-title">Deployment Architectuur & Zero-Downtime Updates</h1>
+  <p class="cover-sub">AWS productie stack · Flyway DB migraties · Blue-green deployment · CI/CD pipeline</p>
+  <div class="cover-pills">
+    <span class="cover-pill">AWS EC2 + RDS</span>
+    <span class="cover-pill">Flyway Migrations</span>
+    <span class="cover-pill">Blue-Green Deploy</span>
+    <span class="cover-pill">GitHub Actions</span>
+    <span class="cover-pill">Oracle Fusion</span>
+    <span class="cover-pill">Azure AD SSO</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-item active" onclick="scrollTo('architectuur')">Architectuur</div>
+  <div class="nav-item" onclick="scrollTo('flyway')">DB Migraties</div>
+  <div class="nav-item" onclick="scrollTo('deployment')">Blue-Green Deploy</div>
+  <div class="nav-item" onclick="scrollTo('cicd')">CI/CD Pipeline</div>
+  <div class="nav-item" onclick="scrollTo('backend')">Backend Code</div>
+  <div class="nav-item" onclick="scrollTo('checklist')">Go-live Checklist</div>
+</nav>
+
+<div class="doc">
+
+<!-- ═══ 01 ARCHITECTUUR ═══ -->
+<div class="section" id="architectuur">
+  <div class="section-num">01</div>
+  <div class="section-title">AWS Productie Architectuur</div>
+  <div class="section-sub">Volledige stack — multi-user, high-availability, zero single point of failure</div>
+  <div class="divider"></div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-label">Uptime target</div><div class="stat-val">99.9<span style="font-size:14px">%</span></div><div class="stat-sub">AWS SLA</div></div>
+    <div class="stat turq"><div class="stat-label">Deployment tijd</div><div class="stat-val">~3<span style="font-size:14px">min</span></div><div class="stat-sub">Zero downtime</div></div>
+    <div class="stat green"><div class="stat-label">Rollback tijd</div><div class="stat-val">60<span style="font-size:14px">sec</span></div><div class="stat-sub">Automatisch</div></div>
+    <div class="stat amber"><div class="stat-label">Data backup</div><div class="stat-val">35<span style="font-size:14px">d</span></div><div class="stat-sub">Point-in-time recovery</div></div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="arch-label">Gebruikers & authenticatie</div>
+      <div class="arch-boxes">
+        <div class="arch-box blue"><div class="abn">Browser / App</div><div class="abs">Planner · Approver · Admin · Readonly</div></div>
+        <div class="arch-box turq"><div class="abn">Azure AD SSO</div><div class="abs">SAML 2.0 · RBAC · MFA verplicht</div></div>
+        <div class="arch-box grey"><div class="abn">AWS WAF + CloudFront</div><div class="abs">DDoS bescherming · HTTPS only</div></div>
+      </div>
+    </div>
+    <div class="arch-arrow">↓</div>
+    <div class="arch-row">
+      <div class="arch-label">Load balancer & routing</div>
+      <div class="arch-boxes">
+        <div class="arch-box blue" style="flex:2"><div class="abn">AWS Application Load Balancer</div><div class="abs">Blue-green routing · Health checks · SSL termination · eu-west-1</div></div>
+      </div>
+    </div>
+    <div class="arch-arrow">↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓</div>
+    <div class="arch-row">
+      <div class="arch-label">Applicatie laag (ECS Fargate — containers)</div>
+      <div class="arch-boxes">
+        <div class="arch-box green"><div class="abn">🟦 BLUE (live)</div><div class="abs">PlanFlow v1.x · 2 containers · t3.medium</div></div>
+        <div class="arch-box amber"><div class="abn">🟩 GREEN (new)</div><div class="abs">PlanFlow v1.x+1 · deploy target · standby</div></div>
+      </div>
+    </div>
+    <div class="arch-arrow">↓</div>
+    <div class="arch-row">
+      <div class="arch-label">Data laag</div>
+      <div class="arch-boxes">
+        <div class="arch-box blue"><div class="abn">AWS RDS Oracle / PostgreSQL</div><div class="abs">Multi-AZ · Automated backups · TDE encryptie · Private subnet</div></div>
+        <div class="arch-box turq"><div class="abn">AWS Secrets Manager</div><div class="abs">DB credentials · API keys · Geen .env in code</div></div>
+        <div class="arch-box grey"><div class="abn">AWS S3</div><div class="abs">Exports · Rapportages · Backups</div></div>
+      </div>
+    </div>
+    <div class="arch-arrow">↕ REST API (OAuth2)</div>
+    <div class="arch-row">
+      <div class="arch-label">Externe systemen</div>
+      <div class="arch-boxes">
+        <div class="arch-box red"><div class="abn">Oracle Fusion Cloud</div><div class="abs">SCM · Procurement · Financials · REST API</div></div>
+        <div class="arch-box blue"><div class="abn">Azure Active Directory</div><div class="abs">Klant SSO · Groepen · Tokens</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Waarom ECS Fargate en niet EC2 direct?</div>
+    <div class="callout-body">Fargate draait Docker containers zonder dat je servers beheert. Je betaalt per seconde gebruik, schaalt automatisch bij piekbelasting, en de blue-green deployment werkt zonder manuele SSH sessies. Voor PlanFlow — met wisselende gebruikspieken tijdens S&OP cycli — is dit de <span class="callout-hl">goedkoopste en meest betrouwbare</span> keuze.</div>
+  </div>
+</div>
+
+<!-- ═══ 02 FLYWAY ═══ -->
+<div class="section" id="flyway">
+  <div class="section-num">02</div>
+  <div class="section-title">Database Migraties met Flyway</div>
+  <div class="section-sub">Elke DB-wijziging is een genummerd bestand — nooit handmatig SQL op productie</div>
+  <div class="divider"></div>
+
+  <div class="callout">
+    <div class="callout-title">Het principe: forward-only, altijd backward compatible</div>
+    <div class="callout-body">Flyway houdt bij welke migraties al gedraaid zijn. Elke nieuwe versie van PlanFlow brengt zijn eigen migratiescripts mee. <span class="callout-hl">Nieuwe kolommen worden altijd nullable toegevoegd</span> — de oude app-versie breekt niet als de nieuwe DB al live staat. Dit is het fundament van zero-downtime deploys.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Migratiestructuur</div><div class="card-sub">db/migrations/</div></div>
+        <div class="card-body">
+          <table class="tbl">
+            <thead><tr><th>Bestand</th><th>Versie</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">V1__init_planflow_schema.sql</td><td class="mono">1</td><td class="green">✓ Live</td></tr>
+              <tr><td class="mono">V2__add_scenarios.sql</td><td class="mono">2</td><td class="green">✓ Live</td></tr>
+              <tr><td class="mono">V3__add_saop_calendar.sql</td><td class="mono">3</td><td class="amber">→ Volgende sprint</td></tr>
+              <tr><td class="mono">V4__add_websockets_sessions.sql</td><td class="mono">4</td><td style="color:var(--text3)">Gepland</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono);background:var(--lgrey);padding:8px 10px;border-radius:5px">
+            # Flyway commando op productie:<br>
+            flyway migrate -url=jdbc:oracle:thin:@host:1521/PLANFLOW
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Gouden regels voor migraties</div></div>
+        <div class="card-body">
+          <div class="checklist">
+            <div class="check-item ok"><span class="check-icon">✓</span>Altijd forward-only — nooit een bestaande migratie aanpassen</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Nieuwe kolommen altijd NULL-able — oude app blijft werken</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Grote data-migraties in aparte R__ (repeatable) scripts</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Migratie draait VOOR nieuwe app-versie goes live</div>
+            <div class="check-item warn"><span class="check-icon">△</span>Nooit een kolom droppen in dezelfde sprint als de app-update</div>
+            <div class="check-item warn"><span class="check-icon">△</span>Rename = nieuw kolom + data kopiëren + oud later droppen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">db/migrations/V1__init_planflow_schema.sql</span>
+      <span class="code-lang">Oracle SQL</span>
+    </div>
+    <div class="code-body"><pre>-- V1__init_planflow_schema.sql
+-- ============================================================
+-- PlanFlow initial schema — Oracle DB 19c
+-- Flyway migration V1 — runs once on first deploy
+-- ============================================================
+
+-- Users (synced from Azure AD)
+CREATE TABLE PLANFLOW.USERS (
+    USER_ID        VARCHAR2(100)  PRIMARY KEY,
+    EMAIL          VARCHAR2(200)  NOT NULL UNIQUE,
+    DISPLAY_NAME   VARCHAR2(200),
+    AD_GROUPS      VARCHAR2(1000),
+    LAST_LOGIN     TIMESTAMP,
+    IS_ACTIVE      NUMBER(1)      DEFAULT 1
+);
+
+-- SKU master (synced from Oracle Fusion)
+CREATE TABLE PLANFLOW.ITEMS (
+    ITEM_CODE      VARCHAR2(50)   PRIMARY KEY,
+    DESCRIPTION    VARCHAR2(500),
+    CATEGORY       VARCHAR2(100),
+    SUPPLIER_CODE  VARCHAR2(50),
+    LEAD_TIME_DAYS NUMBER(3),
+    MIN_LOT        NUMBER(6),
+    INV_VALUE_UNIT NUMBER(12,4),
+    LAST_SYNC      TIMESTAMP      DEFAULT SYSTIMESTAMP,
+    IS_ACTIVE      NUMBER(1)      DEFAULT 1
+);
+
+-- Demand forecast (versioned per SKU per period)
+CREATE TABLE PLANFLOW.DEMAND_FORECAST (
+    FORECAST_ID    NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ITEM_CODE      VARCHAR2(50)   NOT NULL REFERENCES PLANFLOW.ITEMS(ITEM_CODE),
+    LOCATION       VARCHAR2(100),
+    PERIOD_YEAR    NUMBER(4)      NOT NULL,
+    PERIOD_MONTH   NUMBER(2)      NOT NULL,
+    STAT_FORECAST  NUMBER(12,2),
+    FINAL_FORECAST NUMBER(12,2),
+    VERSION        NUMBER(3)      DEFAULT 1,
+    STATUS         VARCHAR2(20)   DEFAULT 'DRAFT',
+    CREATED_BY     VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID),
+    CREATED_AT     TIMESTAMP      DEFAULT SYSTIMESTAMP,
+    APPROVED_BY    VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID),
+    APPROVED_AT    TIMESTAMP,
+    CONSTRAINT chk_fc_status CHECK (STATUS IN ('DRAFT','SUBMITTED','APPROVED'))
+);
+
+-- Purchase orders (workflow)
+CREATE TABLE PLANFLOW.PURCHASE_ORDERS (
+    PO_ID          NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ORACLE_PO_ID   VARCHAR2(50),
+    ITEM_CODE      VARCHAR2(50)   NOT NULL REFERENCES PLANFLOW.ITEMS(ITEM_CODE),
+    SUPPLIER_CODE  VARCHAR2(50)   NOT NULL,
+    QTY_ORDERED    NUMBER(12,2)   NOT NULL,
+    UNIT_PRICE     NUMBER(12,4),
+    NEED_BY_DATE   DATE           NOT NULL,
+    STATUS         VARCHAR2(20)   DEFAULT 'DRAFT',
+    CREATED_BY     VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID),
+    CREATED_AT     TIMESTAMP      DEFAULT SYSTIMESTAMP,
+    APPROVED_BY    VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID),
+    APPROVED_AT    TIMESTAMP,
+    REJECTION_NOTE VARCHAR2(1000),
+    CONSTRAINT chk_po_status CHECK (STATUS IN ('DRAFT','PENDING','APPROVED','SENT','REJECTED'))
+);
+
+-- Audit log (INSERT ONLY — no UPDATE/DELETE permissions for app users)
+CREATE TABLE PLANFLOW.AUDIT_LOG (
+    LOG_ID         NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    USER_ID        VARCHAR2(100),
+    ACTION         VARCHAR2(100),
+    TABLE_NAME     VARCHAR2(100),
+    RECORD_ID      VARCHAR2(100),
+    OLD_VALUES     CLOB,
+    NEW_VALUES     CLOB,
+    IP_ADDRESS     VARCHAR2(50),
+    SESSION_ID     VARCHAR2(200),
+    LOG_TIME       TIMESTAMP      DEFAULT SYSTIMESTAMP
+);
+
+-- Feature flags (per AD group)
+CREATE TABLE PLANFLOW.FEATURE_FLAGS (
+    FLAG_NAME      VARCHAR2(100)  PRIMARY KEY,
+    AD_GROUP       VARCHAR2(100)  DEFAULT 'ALL',
+    IS_ENABLED     NUMBER(1)      DEFAULT 0,
+    DESCRIPTION    VARCHAR2(500),
+    UPDATED_AT     TIMESTAMP      DEFAULT SYSTIMESTAMP
+);
+
+-- Indexes
+CREATE INDEX idx_fc_item_period ON PLANFLOW.DEMAND_FORECAST(ITEM_CODE, PERIOD_YEAR, PERIOD_MONTH);
+CREATE INDEX idx_po_status ON PLANFLOW.PURCHASE_ORDERS(STATUS);
+CREATE INDEX idx_audit_time ON PLANFLOW.AUDIT_LOG(LOG_TIME);
+CREATE INDEX idx_audit_user ON PLANFLOW.AUDIT_LOG(USER_ID);</pre></div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">db/migrations/V2__add_scenarios.sql</span>
+      <span class="code-lang">Oracle SQL — backward compatible</span>
+    </div>
+    <div class="code-body"><pre>-- V2__add_scenarios.sql
+-- ============================================================
+-- PlanFlow V2 — Scenario planning feature
+-- Safe to run on live DB — only adds new tables/columns
+-- ============================================================
+
+-- Scenario planning
+CREATE TABLE PLANFLOW.SCENARIOS (
+    SCENARIO_ID    NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NAME           VARCHAR2(200)  NOT NULL,
+    DESCRIPTION    VARCHAR2(1000),
+    BASE_VERSION   NUMBER(3)      DEFAULT 1,
+    CREATED_BY     VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID),
+    CREATED_AT     TIMESTAMP      DEFAULT SYSTIMESTAMP,
+    IS_ACTIVE      NUMBER(1)      DEFAULT 1
+);
+
+CREATE TABLE PLANFLOW.SCENARIO_OVERRIDES (
+    OVERRIDE_ID    NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    SCENARIO_ID    NUMBER         NOT NULL REFERENCES PLANFLOW.SCENARIOS(SCENARIO_ID),
+    ITEM_CODE      VARCHAR2(50)   NOT NULL,
+    PERIOD_YEAR    NUMBER(4),
+    PERIOD_MONTH   NUMBER(2),
+    OVERRIDE_QTY   NUMBER(12,2),
+    OVERRIDE_TYPE  VARCHAR2(50),
+    CREATED_BY     VARCHAR2(100)  REFERENCES PLANFLOW.USERS(USER_ID)
+);
+
+-- Add scenario reference to forecast table (backward compatible)
+ALTER TABLE PLANFLOW.DEMAND_FORECAST ADD (
+    SCENARIO_ID    NUMBER         REFERENCES PLANFLOW.SCENARIOS(SCENARIO_ID)
+);
+
+-- New feature flag
+INSERT INTO PLANFLOW.FEATURE_FLAGS VALUES (
+    'SCENARIO_PLANNING', 'PLANFLOW_ADMIN', 1,
+    'Scenario planning module — multi-version what-if analysis',
+    SYSTIMESTAMP
+);</pre></div>
+  </div>
+</div>
+
+<!-- ═══ 03 BLUE-GREEN ═══ -->
+<div class="section" id="deployment">
+  <div class="section-num">03</div>
+  <div class="section-title">Blue-Green Deployment</div>
+  <div class="section-sub">Nieuwe versie live in 3 minuten — rollback in 60 seconden</div>
+  <div class="divider"></div>
+
+  <div class="flow">
+    <div class="flow-step ok"><div class="fsn">1. Test</div><div class="fss">npm test + lint</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step ok"><div class="fsn">2. Build</div><div class="fss">Docker image + ECR</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active"><div class="fsn">3. Flyway</div><div class="fss">DB migraties draaien</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active"><div class="fsn">4. Deploy GREEN</div><div class="fss">Nieuwe versie standby</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active"><div class="fsn">5. Health check</div><div class="fss">/health endpoint</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step ok"><div class="fsn">6. Cutover</div><div class="fss">ALB → GREEN live</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step warn"><div class="fsn">7. BLUE standby</div><div class="fss">60s rollback mogelijk</div></div>
+  </div>
+
+  <div style="margin-top:16px" class="grid-2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Wat gebruikers meemaken tijdens een update</div></div>
+      <div class="card-body">
+        <div class="checklist">
+          <div class="check-item ok"><span class="check-icon">✓</span>Geen pagina die offline gaat — de ALB stuurt verkeer naadloos door</div>
+          <div class="check-item ok"><span class="check-icon">✓</span>Actieve sessies blijven bestaan — tokens zijn stateless (JWT)</div>
+          <div class="check-item ok"><span class="check-icon">✓</span>Forecasts die iemand aan het bewerken is gaan niet verloren — opgeslagen in DB</div>
+          <div class="check-item ok"><span class="check-icon">✓</span>Maximaal 1-2 requests die een 502 zien bij de daadwerkelijke cutover</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Als een update misgaat — rollback procedure</div></div>
+      <div class="card-body">
+        <div class="checklist">
+          <div class="check-item info"><span class="check-icon">1</span>Health check GREEN faalt → pipeline stopt automatisch</div>
+          <div class="check-item info"><span class="check-icon">2</span>BLUE blijft live — gebruikers merken niets</div>
+          <div class="check-item info"><span class="check-icon">3</span>Handmatige rollback: ALB regel terugzetten naar BLUE (60 sec)</div>
+          <div class="check-item info"><span class="check-icon">4</span>DB migraties zijn al gedraaid — backward compatible dus geen probleem</div>
+          <div class="check-item warn"><span class="check-icon">△</span>Dát is waarom elke migratie backward compatible moet zijn</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 04 CI/CD ═══ -->
+<div class="section" id="cicd">
+  <div class="section-num">04</div>
+  <div class="section-title">CI/CD Pipeline — GitHub Actions</div>
+  <div class="section-sub">Automatisch testen, bouwen en deployen bij elke push naar main</div>
+  <div class="divider"></div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">.github/workflows/deploy.yml</span>
+      <span class="code-lang">GitHub Actions YAML</span>
+    </div>
+    <div class="code-body"><pre># .github/workflows/deploy.yml
+# ============================================================
+# PlanFlow CI/CD Pipeline — GitHub Actions
+# Blue-green deployment naar AWS
+# ============================================================
+
+name: PlanFlow Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REPOSITORY: planflow-app
+  APP_NAME: planflow
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, push Docker image
+        id: meta
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "tags=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" &gt;&gt; $GITHUB_OUTPUT
+
+  migrate-db:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Flyway migrations
+        # Flyway runs BEFORE new app code goes live
+        # Safe: migrations are always backward compatible
+        run: |
+          docker run --rm             -e FLYWAY_URL="${{ secrets.DB_JDBC_URL }}"             -e FLYWAY_USER="${{ secrets.DB_USER }}"             -e FLYWAY_PASSWORD="${{ secrets.DB_PASSWORD }}"             -v $(pwd)/db/migrations:/flyway/sql             flyway/flyway:10 migrate
+        # If migration fails → pipeline stops, old app keeps running, NO downtime
+
+  deploy-green:
+    needs: migrate-db
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Deploy to GREEN environment
+        # Deploy new version to green — blue still serves traffic
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: planflow-task-def.json
+          service: planflow-green
+          cluster: planflow-cluster
+          wait-for-service-stability: true
+
+      - name: Health check GREEN
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}"             https://green.planflow-internal.com/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "Green health check failed: $STATUS"
+            exit 1
+          fi
+          echo "Green is healthy — switching traffic"
+
+      - name: Switch traffic BLUE → GREEN
+        # Instant cutover — users see new version within 30 seconds
+        run: |
+          aws elbv2 modify-rule             --rule-arn ${{ secrets.ALB_RULE_ARN }}             --actions '[{"Type":"forward","TargetGroupArn":"${{ secrets.GREEN_TG_ARN }}"}]'
+
+      - name: Notify team
+        run: |
+          echo "Deploy ${{ github.sha }} live on ${{ github.event.inputs.environment || 'staging' }}"
+          # Add Slack/Teams notification here</pre></div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">Dockerfile</span>
+      <span class="code-lang">Docker — multi-stage productie build</span>
+    </div>
+    <div class="code-body"><pre># Dockerfile
+# ============================================================
+# PlanFlow — Production Docker image
+# Multi-stage build: dependencies → production
+# ============================================================
+
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM node:20-alpine AS production
+WORKDIR /app
+
+# Security: run as non-root
+RUN addgroup -g 1001 -S nodejs &amp;&amp; adduser -S planflow -u 1001
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --chown=planflow:nodejs . .
+
+# Remove dev files
+RUN rm -rf tests/ .github/ *.md
+
+USER planflow
+EXPOSE 3000
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+
+CMD ["node", "src/server.js"]</pre></div>
+  </div>
+</div>
+
+<!-- ═══ 05 BACKEND ═══ -->
+<div class="section" id="backend">
+  <div class="section-num">05</div>
+  <div class="section-title">Backend Code</div>
+  <div class="section-sub">Node.js · Express · Oracle DB · Azure AD · Audit logging</div>
+  <div class="divider"></div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">.env.example</span>
+      <span class="code-lang">Environment variables — nooit committen</span>
+    </div>
+    <div class="code-body"><pre># .env.example
+# ============================================================
+# PlanFlow environment variables
+# NOOIT echte waarden committen naar git
+# Op productieserver beheerd via AWS Secrets Manager
+# ============================================================
+
+# Oracle DB (via AWS RDS of klant DB)
+DB_USER=planflow_app
+DB_PASSWORD=CHANGE_ME
+DB_CONNECT_STRING=your-rds-endpoint.rds.amazonaws.com:1521/PLANFLOW
+DB_POOL_MIN=4
+DB_POOL_MAX=20
+
+# Oracle Fusion Cloud
+FUSION_BASE_URL=https://your-tenant.fa.us2.oraclecloud.com
+FUSION_CLIENT_ID=CHANGE_ME
+FUSION_CLIENT_SECRET=CHANGE_ME
+FUSION_TENANT_ID=CHANGE_ME
+
+# Azure AD SSO
+AZURE_TENANT_ID=CHANGE_ME
+AZURE_CLIENT_ID=CHANGE_ME
+AZURE_CLIENT_SECRET=CHANGE_ME
+
+# App
+NODE_ENV=production
+PORT=3000
+SESSION_SECRET=CHANGE_ME_64_CHAR_RANDOM_STRING
+LOG_LEVEL=info
+
+# AWS (automatisch beschikbaar via IAM role op EC2/ECS)
+AWS_REGION=eu-west-1</pre></div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="code-filename">src/server.js</span>
+      <span class="code-lang">Node.js — productie backend</span>
+    </div>
+    <div class="code-body"><pre>// src/server.js
+// ============================================================
+// PlanFlow Backend — productie entry point
+// ============================================================
+const express    = require('express');
+const helmet     = require('helmet');
+const rateLimit  = require('express-rate-limit');
+const passport   = require('passport');
+const { BearerStrategy } = require('passport-azure-ad');
+const oracledb   = require('oracledb');
+const winston    = require('winston');
+
+const app = express();
+
+// ── LOGGER ──────────────────────────────────────────────────
+const log = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [new winston.transports.Console()]
+});
+
+// ── SECURITY MIDDLEWARE ──────────────────────────────────────
+app.use(helmet());
+app.use(express.json({ limit: '1mb' }));
+app.use(rateLimit({ windowMs: 15*60*1000, max: 500 }));
+
+// ── HEALTH CHECK (voor AWS ALB + Flyway pipeline) ────────────
+app.get('/health', async (req, res) =&gt; {
+  try {
+    const conn = await oracledb.getConnection();
+    await conn.execute('SELECT 1 FROM DUAL');
+    await conn.close();
+    res.json({ status: 'ok', db: 'connected', ts: new Date() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'disconnected' });
+  }
+});
+
+// ── AZURE AD SSO ─────────────────────────────────────────────
+passport.use(new BearerStrategy({
+  identityMetadata: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/v2.0/.well-known/openid-configuration`,
+  clientID: process.env.AZURE_CLIENT_ID,
+  validateIssuer: true,
+  loggingLevel: 'warn'
+}, async (token, done) =&gt; {
+  try {
+    const conn = await oracledb.getConnection();
+    const result = await conn.execute(
+      'SELECT * FROM PLANFLOW.USERS WHERE USER_ID = :id AND IS_ACTIVE = 1',
+      { id: token.oid }
+    );
+    await conn.close();
+    if (!result.rows.length) return done(null, false);
+    done(null, { ...result.rows[0], adGroups: token.groups || [] });
+  } catch (err) {
+    done(err);
+  }
+}));
+
+// ── RBAC MIDDLEWARE ──────────────────────────────────────────
+const requireRole = (role) =&gt; (req, res, next) =&gt; {
+  if (!req.user?.adGroups?.includes(role)) {
+    return res.status(403).json({ error: 'Onvoldoende rechten' });
+  }
+  next();
+};
+
+// ── ORACLE DB POOL ───────────────────────────────────────────
+async function initDB() {
+  await oracledb.createPool({
+    user:          process.env.DB_USER,
+    password:      process.env.DB_PASSWORD,
+    connectString: process.env.DB_CONNECT_STRING,
+    poolMin: Number(process.env.DB_POOL_MIN) || 4,
+    poolMax: Number(process.env.DB_POOL_MAX) || 20,
+    poolIncrement: 2
+  });
+  log.info('Oracle DB pool initialized');
+}
+
+// ── API ROUTES ────────────────────────────────────────────────
+const auth = passport.authenticate('oauth-bearer', { session: false });
+
+// Forecasts ophalen
+app.get('/api/forecasts', auth, async (req, res) =&gt; {
+  const { year, month, category } = req.query;
+  const conn = await oracledb.getConnection();
+  try {
+    const sql = `
+      SELECT f.*, i.DESCRIPTION, i.CATEGORY, i.SUPPLIER_CODE
+      FROM PLANFLOW.DEMAND_FORECAST f
+      JOIN PLANFLOW.ITEMS i ON f.ITEM_CODE = i.ITEM_CODE
+      WHERE f.PERIOD_YEAR = :year
+        AND f.PERIOD_MONTH = :month
+        AND (:cat IS NULL OR i.CATEGORY = :cat)
+      ORDER BY i.CATEGORY, i.ITEM_CODE`;
+    const result = await conn.execute(sql,
+      { year: Number(year), month: Number(month), cat: category || null },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    res.json(result.rows);
+  } finally {
+    await conn.close();
+  }
+});
+
+// Forecast opslaan + audit log
+app.put('/api/forecasts/:id', auth, async (req, res) =&gt; {
+  const { finalForecast } = req.body;
+  const conn = await oracledb.getConnection();
+  try {
+    // Haal oude waarde op voor audit
+    const old = await conn.execute(
+      'SELECT FINAL_FORECAST FROM PLANFLOW.DEMAND_FORECAST WHERE FORECAST_ID = :id',
+      { id: req.params.id },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    // Update
+    await conn.execute(
+      'UPDATE PLANFLOW.DEMAND_FORECAST SET FINAL_FORECAST=:fc, STATUS=:st WHERE FORECAST_ID=:id',
+      { fc: finalForecast, st: 'DRAFT', id: req.params.id }
+    );
+    // Audit log
+    await conn.execute(`
+      INSERT INTO PLANFLOW.AUDIT_LOG
+        (USER_ID, ACTION, TABLE_NAME, RECORD_ID, OLD_VALUES, NEW_VALUES, IP_ADDRESS)
+      VALUES (:uid, 'FORECAST_UPDATE', 'DEMAND_FORECAST', :rid, :old, :new, :ip)`,
+      {
+        uid: req.user.USER_ID,
+        rid: req.params.id,
+        old: JSON.stringify(old.rows[0]),
+        new: JSON.stringify({ FINAL_FORECAST: finalForecast }),
+        ip:  req.ip
+      }
+    );
+    await conn.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    await conn.close();
+  }
+});
+
+// Forecast goedkeuren (PLANFLOW_APPROVER vereist)
+app.post('/api/forecasts/:id/approve', auth,
+  requireRole('PLANFLOW_APPROVER'),
+  async (req, res) =&gt; {
+    const conn = await oracledb.getConnection();
+    try {
+      await conn.execute(`
+        UPDATE PLANFLOW.DEMAND_FORECAST
+        SET STATUS='APPROVED', APPROVED_BY=:uid, APPROVED_AT=SYSTIMESTAMP
+        WHERE FORECAST_ID=:id`,
+        { uid: req.user.USER_ID, id: req.params.id }
+      );
+      await conn.execute(`
+        INSERT INTO PLANFLOW.AUDIT_LOG (USER_ID,ACTION,TABLE_NAME,RECORD_ID,IP_ADDRESS)
+        VALUES (:uid,'FORECAST_APPROVE','DEMAND_FORECAST',:rid,:ip)`,
+        { uid: req.user.USER_ID, rid: req.params.id, ip: req.ip }
+      );
+      await conn.commit();
+      res.json({ ok: true });
+    } finally {
+      await conn.close();
+    }
+  }
+);
+
+// PO aanmaken als Draft in Oracle Fusion
+app.post('/api/purchase-orders', auth,
+  requireRole('PLANFLOW_APPROVER'),
+  async (req, res) =&gt; {
+    const { itemCode, qty, supplierId, needByDate } = req.body;
+    // Stap 1: opslaan in lokale DB
+    const conn = await oracledb.getConnection();
+    let poId;
+    try {
+      const result = await conn.execute(`
+        INSERT INTO PLANFLOW.PURCHASE_ORDERS
+          (ITEM_CODE, SUPPLIER_CODE, QTY_ORDERED, NEED_BY_DATE, STATUS, CREATED_BY)
+        VALUES (:item, :sup, :qty, TO_DATE(:nbd,'YYYY-MM-DD'), 'PENDING', :uid)
+        RETURNING PO_ID INTO :poId`,
+        { item:itemCode, sup:supplierId, qty, nbd:needByDate, uid:req.user.USER_ID, poId:{dir:oracledb.BIND_OUT,type:oracledb.NUMBER} }
+      );
+      poId = result.outBinds.poId[0];
+      await conn.commit();
+    } finally {
+      await conn.close();
+    }
+    // Stap 2: stuur naar Oracle Fusion als Draft PO
+    // (zie fusion-client.js — altijd DRAFT, nooit definitief)
+    res.json({ ok: true, poId });
+  }
+);
+
+// ── START ─────────────────────────────────────────────────────
+async function start() {
+  await initDB();
+  app.listen(process.env.PORT || 3000, () =&gt; {
+    log.info(`PlanFlow running on port ${process.env.PORT || 3000}`);
+  });
+}
+start().catch(err =&gt; { log.error(err); process.exit(1); });</pre></div>
+  </div>
+</div>
+
+<!-- ═══ 06 CHECKLIST ═══ -->
+<div class="section" id="checklist">
+  <div class="section-num">06</div>
+  <div class="section-title">Go-live Checklist</div>
+  <div class="section-sub">Alles wat op orde moet zijn vóór eerste productiegebruikers</div>
+  <div class="divider"></div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">AWS Infrastructuur</div></div>
+        <div class="card-body">
+          <div class="checklist">
+            <div class="check-item ok"><span class="check-icon">✓</span>ECS Fargate cluster aangemaakt in eu-west-1</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>RDS instance in private subnet, Multi-AZ enabled</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>ALB met HTTPS listener, SSL certificaat via ACM</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Security groups: alleen 443 open naar buiten</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Secrets Manager gevuld met alle credentials</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>CloudWatch logging ingeschakeld</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>RDS automated backups: 35 dagen retentie</div>
+            <div class="check-item warn"><span class="check-icon">△</span>UptimeRobot of Pingdom alert op /health endpoint</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Integraties & Security</div></div>
+        <div class="card-body">
+          <div class="checklist">
+            <div class="check-item ok"><span class="check-icon">✓</span>Azure AD app registratie aangemaakt, SAML 2.0 geconfigureerd</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>4 AD groepen aangemaakt: ADMIN / APPROVER / PLANNER / READONLY</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Oracle Fusion sandbox toegang gevalideerd</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>OAuth2 client credentials getest op items API</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Flyway V1 migratie gedraaid op lege DB</div>
+            <div class="check-item ok"><span class="check-icon">✓</span>Audit log INSERT-only rechten geconfigureerd</div>
+            <div class="check-item warn"><span class="check-icon">△</span>Penetratietest door externe partij gepland</div>
+            <div class="check-item warn"><span class="check-icon">△</span>MFA Conditional Access policy actief in Azure AD</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:4px">
+    <div class="card-head"><div class="card-title">Eerste deploysequentie — stap voor stap</div></div>
+    <div class="card-body">
+      <table class="tbl">
+        <thead><tr><th>Stap</th><th>Actie</th><th>Wie</th><th>Tijd</th><th>Validatie</th></tr></thead>
+        <tbody>
+          <tr><td class="blue">1</td><td>RDS aanmaken + Flyway V1 draaien</td><td>Jij + ik</td><td>30 min</td><td class="green">SELECT COUNT(*) FROM PLANFLOW.USERS</td></tr>
+          <tr><td class="blue">2</td><td>Azure AD app registreren + testen</td><td>Klant IT</td><td>1u</td><td class="green">Login via SSO werkt</td></tr>
+          <tr><td class="blue">3</td><td>Oracle Fusion sandbox token ophalen</td><td>Klant Oracle beheerder</td><td>1-4u</td><td class="green">GET /items geeft data terug</td></tr>
+          <tr><td class="blue">4</td><td>Eerste Docker image bouwen + pushen naar ECR</td><td>Jij + ik</td><td>15 min</td><td class="green">Image staat in ECR repository</td></tr>
+          <tr><td class="blue">5</td><td>ECS service deployen (BLUE)</td><td>Jij + ik</td><td>10 min</td><td class="green">/health geeft 200 terug</td></tr>
+          <tr><td class="blue">6</td><td>Eerste gebruiker inloggen (admin)</td><td>Ravi Santokhi</td><td>5 min</td><td class="green">Dashboard laadt met Oracle data</td></tr>
+          <tr><td class="blue">7</td><td>GitHub Actions pipeline activeren</td><td>Jij + ik</td><td>20 min</td><td class="green">Test deploy naar staging slaagt</td></tr>
+          <tr><td class="amber">8</td><td>UAT met 3-5 planners</td><td>Key users</td><td>1-2 dagen</td><td class="amber">Feedbackronde verwerkt</td></tr>
+          <tr><td class="blue">9</td><td>Go-live alle gebruikers</td><td>Alle partijen</td><td>—</td><td class="green">🎉</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:16px">
+    <div class="callout-title">Toekomstige features uitrollen zonder downtime</div>
+    <div class="callout-body">Vanaf dit fundament is elke nieuwe feature een <span class="callout-hl">pull request + merge naar main</span>. GitHub Actions test automatisch, bouwt een nieuwe Docker image, draait Flyway migraties, deployt naar GREEN, valideert de health check, en schakelt over. Jij hoeft niets te doen. Data is altijd veilig — elke migratie is backward compatible geschreven.</div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <div>
+    <div class="footer-logo">Plan<span>Flow</span></div>
+    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;letter-spacing:1px">POWER TO THE FINANCIAL</div>
+  </div>
+  <div class="footer-right">
+    Finext Digital Finance<br>
+    Deployment Architectuur v1.0
+  </div>
+</div>
+
+<script>
+function scrollTo(id) {
+  document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+const sections=['architectuur','flyway','deployment','cicd','backend','checklist'];
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(id=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<120)cur=id;});
+  document.querySelectorAll('.nav-item').forEach((tab,i)=>{tab.classList.toggle('active',sections[i]===cur);});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import openpyxl; wb = openpyxl.load_workbook\\('c:/Users/Ravi/Documents/AIApps/S&OP Lucas Bols/LB_Transactional_Data.xlsx'\\); print\\('Sheets:', wb.sheetnames\\)\")",
+      "Bash(python3 -c \"import openpyxl; wb = openpyxl.load_workbook\\('c:/Users/Ravi/Documents/AIApps/S&OP Lucas Bols/LB_Transactional_Data.xlsx'\\); print\\('Sheets:', wb.sheetnames\\)\")",
+      "Bash(py -c \"import openpyxl; wb = openpyxl.load_workbook\\('c:/Users/Ravi/Documents/AIApps/S&OP Lucas Bols/LB_Transactional_Data.xlsx'\\); print\\('Sheets:', wb.sheetnames\\)\")",
+      "Bash(where python:*)",
+      "Bash(where python3:*)",
+      "Bash(where py:*)",
+      "Bash(\"/c/Users/Ravi/AppData/Local/Microsoft/WindowsApps/python.exe\" -c \"import openpyxl; wb = openpyxl.load_workbook\\('c:/Users/Ravi/Documents/AIApps/S&OP Lucas Bols/LB_Transactional_Data.xlsx'\\); print\\('Sheets:', wb.sheetnames\\)\")",
+      "Bash(powershell.exe -Command ':*)",
+      "Bash(python -m py_compile app.py utils/*.py pages/*.py)",
+      "Bash(grep -E '\\\\.\\(py|md|txt\\)$')"
+    ]
+  }
+}
