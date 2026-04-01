@@ -8,9 +8,8 @@ from utils.data_loader import (
     load_orders_in,
     load_orders_out,
     get_monthly_demand,
-    calculate_safety_stock,
 )
-from utils.forecast_engine import calculate_safety_stock as calc_ss
+from utils.forecast_engine import calculate_safety_stock
 from utils.styling import COLORS
 
 st.set_page_config(page_title="Inventory Planning | PlanFlow", layout="wide")
@@ -40,7 +39,7 @@ items["days_on_hand"] = items.apply(
 
 # Calculate safety stock
 items["safety_stock"] = items.apply(
-    lambda x: calc_ss(
+    lambda x: calculate_safety_stock(
         pd.Series(demand[demand["item_code"] == x["item_code"]]["quantity"].values),
         x["lead_time_days"],
         service_level=0.98

@@ -13,17 +13,41 @@ DATA_FILE = Path(__file__).parent.parent / "LB_Transactional_Data.xlsx"
 def load_transactions() -> pd.DataFrame:
     """Load transaction history from Excel."""
     df = pd.read_excel(DATA_FILE, sheet_name="Transactions")
-    # Standardize column names
-    df.columns = df.columns.str.strip().str.lower()
+    # Standardize column names - strip, lowercase, replace spaces with underscore
+    df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('/', '_')
+
+    # Rename columns to standard names
+    rename_map = {
+        'date': 'date',
+        'quantity_sold': 'quantity',
+        'transaction_revenue': 'revenue',
+        'item_code': 'item_code',
+        'location': 'location',
+        'market': 'market',
+        'market_code': 'market_code',
+        'infofield1': 'info_field'
+    }
+
+    # Only rename columns that exist
+    existing_renames = {k: v for k, v in rename_map.items() if k in df.columns}
+    df = df.rename(columns=existing_renames)
 
     # Parse date column
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y", errors="coerce")
 
     # Add year/month columns for grouping
-    df["year"] = df["date"].dt.year
-    df["month"] = df["date"].dt.month
-    df["year_month"] = df["date"].dt.to_period("M")
+    if "date" in df.columns:
+        df["year"] = df["date"].dt.year
+        df["month"] = df["date"].dt.month
+        df["year_month"] = df["date"].dt.to_period("M")
+
+    # Ensure quantity is numeric
+    if "quantity" in df.columns:
+        df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce")
+
+    if "revenue" in df.columns:
+        df["revenue"] = pd.to_numeric(df["revenue"], errors="coerce")
 
     return df
 
@@ -132,9 +156,12 @@ def get_monthly_demand() -> pd.DataFrame:
     """
     transactions = load_transactions()
 
+    # Filter out rows with missing critical data
+    transactions = transactions.dropna(subset=["item_code", "year_month"])
+
     demand = transactions.groupby(["item_code", "year_month"]).agg({
-        "quantity sold": "sum",
-        "transaction revenue": "sum"
+        "quantity": "sum",
+        "revenue": "sum"
     }).reset_index()
 
     demand.columns = ["item_code", "year_month", "quantity", "revenue"]
